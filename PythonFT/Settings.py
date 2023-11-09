@@ -7,8 +7,6 @@ from PIL import Image,ImageTk,ImageDraw
 import pyautogui
 import time
 import numpy as np
-import subprocess
-from Config import *
 
 # Here better to have a new window open
 class SettingsWindow:
@@ -16,15 +14,9 @@ class SettingsWindow:
     def __init__(self, master, json_file): 
         self.settings_window = tk.Toplevel(master)
         self.settings_window.title('Settings')
-        #self.settings_window.focus_set() # Window Implemetation
-        #self.settings_window.attributes('-fullscreen', True)
+        self.settings_window.focus_set()
+        self.settings_window.attributes('-fullscreen', True)
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
-
-        # Creating Config path for manual configuration of certain parameters
-        dir_path = os.path.dirname(os.path.abspath(__file__))
-        config_dir = "Configurations"
-        config_file_name = "trial_by_trial_config.csv"
-        self.ConfigFilePath = os.path.join(dir_path, config_dir, config_file_name)
 
         # Create a canvas and a vertical scrollbar
         self.canvas = tk.Canvas(self.settings_window)
@@ -117,7 +109,7 @@ class SettingsWindow:
             self.ent_target_size.insert(0, data["target_size"])
 
         # creating option menus 
-        drp_num_quest = ttk.OptionMenu(self.frm_settings, self.clk_num_quest, self.clk_num_quest.get(), *range(0, 11), command=self.update_questions)
+        drp_num_quest = ttk.OptionMenu(self.frm_settings, self.clk_num_quest, self.clk_num_quest.get(), *range(1, 11), command=self.update_questions)
         drp_inverted = ttk.OptionMenu(self.frm_settings, self.clk_inverted, self.clk_inverted.get(), *self.optionTF) 
         drp_trigger_visible = ttk.OptionMenu(self.frm_settings, self.clk_trigger_visible, self.clk_trigger_visible.get(), *self.optionTF)
         drp_configure_with_csv = ttk.OptionMenu(self.frm_settings, self.clk_configure_with_csv, self.clk_configure_with_csv.get(), *self.optionTF, command=self.update_csv_config_options)
@@ -238,17 +230,14 @@ class SettingsWindow:
                 sublabel_answer_range.grid(row=4*i + i+3, column=1, pady=2, padx=10, sticky='w')
                 drp_answer_range.grid(row=4*i + i+3, column=2, pady=2, padx=10, sticky='w')
 
-        btn_open_config = ttk.Button(self.frm_settings, text="Open config file", command=self.open_config)
-        btn_open_config.grid(row=17, column=0, pady=10, padx=20, sticky='w')
-
         btn_save = ttk.Button(self.frm_settings, text="Save", command=self.save_settings)
-        btn_save.grid(row=18, column=0, pady=2, padx=20, sticky='w')
+        btn_save.grid(row=17, column=0, pady=50, padx=20, sticky='w')
 
         btn_close = ttk.Button(self.frm_settings, text="Close", command=self.close_settings_window)
-        btn_close.grid(row=19, column=0, pady=2, padx=20, sticky='w')
+        btn_close.grid(row=18, column=0, pady=2, padx=20, sticky='w')
 
         lbl_remark = tk.Label(master=self.frm_settings, text="NB: Pour référence, la croix de départ se situe à 5% de la hauteur de l'écran et tous les temps sont en (ms).", font=("Arial", 12, "italic"))
-        lbl_remark.grid(row=20, column=0, pady=10, padx=20, sticky='w')
+        lbl_remark.grid(row=19, column=0, pady=10, padx=20, sticky='w')
 
     def on_configure(self, event):
         # Set the scroll region after UI has been configured
@@ -368,10 +357,6 @@ class SettingsWindow:
             label.grid(row=i, column=0, pady=2, padx=10, sticky='w')
             entry.grid(row=i, column=1, pady=2, padx=10, sticky='w')
 
-    def open_config(self):
-        subprocess.run(["open", self.ConfigFilePath])
-        # os.startfile(self.ConfigFilePath) # Windows Implementation
-
     def save_settings(self):
         # Gather user input (for demonstration purposes, I'm assuming Checkbuttons for the questions)
         
@@ -441,7 +426,5 @@ class SettingsWindow:
 
     def close_settings_window(self):
         self.settings_window.destroy()
-
-
    
 

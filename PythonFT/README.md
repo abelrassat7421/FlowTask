@@ -1,7 +1,7 @@
 # 🌊 Flow Task v1.0.1
 
 The Flow Task is an application tailored to assess variations in response efficiency across distinct subject groups. The cohorts being analyzed comprise seasoned contemplative practitioners, expert first-person shooter gamers, and a control group. 
-This task was chiefly designed by [someone]() in collaboration with [others]().
+This task was chiefly designed by [David Zarka]() in collaboration with [others]().
 
 ---
 ---
@@ -81,9 +81,8 @@ The task is based around a mouse task that requires the subject to reach the dis
 ### 2.5 Program Configuration Options
 We present here a brief desciption of what each parameter controls for in the Flow Task. These parameters can be adjusted in the **Settings** window when launching the application.
 - **Number of questions**: Controls the number of questions that can be asked when the task is running. Questions can appear to the user either before a trial begins or immediately at the end of a trial ('pre' and 'post' options). For each question the formulation of the question, the range of possible answers (between 1 and number another natural number between 2 and 9) and the timing as described previously. 
-- **Trigger Visible**: Boolean parameter to make trigger visible for al trials.
 - **Configure csv manually**: 
-  - If set to true, the user must manually populate the [trial_by_trial_config.csv](Configurations/trial_by_trial_config.csv). Be careful to set the number of complete rows in the csv file in accordance with the Number of Random Trials chosen in the **Settings** window.
+  - If set to true, the user must manually populate the [trial_by_trial_config.csv](Configurations/trial_by_trial_config.csv). Be careful to set the number of complete rows in the csv file in accordance with the Number of Random Trials chosen in the **Settings** window. The .csv file can be opened from the settings window.❗️In that case make sure your default application to open .csv files doesn't automatically converts the file into a different file type. We recommend using VSCode with an adequate csv plugin installed.
     1. First column: (int) Sets the position of the target for each trial. Accepted values are 0, 1, 2 (left, center, right respectively)
     2. Second column: (int) Determines whether the mouse is visible or not for a given trial.
     3. Third column: (float) Determines where the trigger (horizontal bar) lies. Accepted values are between 0.0 and 100.0 (percentage of the screen height with 100% referring to the top of the screen).
@@ -108,7 +107,15 @@ We present here a brief desciption of what each parameter controls for in the Fl
 ### 2.6 Mouse Inversion Option (Windows users)
 - To have access to the mouse inversion option, download [sakasa mouse](https://www.filepuma.com/download/sakasa_mouse_1.03-6527/). 
 - Once downloaded, add the path to the executable sakasa.exe in the trial_update method in the [Start.py](Start.py) file as shown below:
-<img src="Configurations/Images/sakasa_path_readme.png" alt="sakasa path" width="600"/>
+<div style="text-align: center;">
+   <img src="Configurations/Images/sakasa_path_readme.png" alt="sakasa path" width="600"/>
+</div>
+---
+### 2.7 Program Outputs
+- The application outputs the answers to questions, a file with the major landmarks of the task e.g., starting point, a copy of the configuration files, a picture with the trajectory for each trial and a csv for the trajectory coordinates. Note the coordinate system used where the origin is the upper left corner of the screen. 
+<div style="text-align: center;">
+   <img src="Configurations/Images/coordsys.png" alt="coordinate system" width="400"/>
+</div>
 
 ---
 ---
@@ -144,4 +151,7 @@ If any help is needed, I'll be happy to lend a hand at abelrasssat@gmail.com.
 
 ## 7. Acknowledgments
 
--- 
+Icon credits: 
+- <a href="https://www.flaticon.com/free-icons/triangle" title="triangle icons">Triangle icons created by riajulislam - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/close" title="close icons">Close icons created by ariefstudio - Flaticon</a>
+
