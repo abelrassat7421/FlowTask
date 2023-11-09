@@ -1,0 +1,41 @@
+{
+    "num_questions": 3,
+    "questions": [
+        {
+            "timing": "pre",
+            "formulation": "What's up?",
+            "answer_range": 4
+        },
+        {
+            "timing": "pre",
+            "formulation": "Ready?",
+            "answer_range": 9
+        },
+        {
+            "timing": "post",
+            "formulation": "How did it go?",
+            "answer_range": 9
+        }
+    ],
+    "inverted": false,
+    "trigger_visible": true,
+    "configure_with_csv": true,
+    "mouse_appear_freq": 100.0,
+    "num_triggers": 2,
+    "trigger_values": [
+        20.0,
+        30.0
+    ],
+    "num_triangle_target_interval": 2,
+    "time_intervals": [
+        800,
+        1000
+    ],
+    "trajectory_sampling_rate": 100,
+    "preparation_time": 2000,
+    "inter-trial_time": 500,
+    "time_to_center_of_target": 2000,
+    "triangle_time": 1000,
+    "num_random_trial": 3,
+    "target_size": 120
+}
