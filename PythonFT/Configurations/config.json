@@ -1,21 +1,16 @@
 {
-    "num_questions": 2,
+    "num_questions": 1,
     "questions": [
         {
             "timing": "pre",
             "formulation": "What's up?",
-            "answer_range": 9
-        },
-        {
-            "timing": "post",
-            "formulation": "Ready?",
-            "answer_range": 9
+            "answer_range": 2
         }
     ],
     "inverted": false,
     "trigger_visible": true,
-    "configure_with_csv": true,
-    "mouse_appear_freq": 50.0,
+    "configure_with_csv": false,
+    "mouse_appear_freq": 100.0,
     "num_triggers": 1,
     "trigger_values": [
         20.0
@@ -29,6 +24,6 @@
     "inter-trial_time": 3000,
     "time_to_center_of_target": 2000,
     "triangle_time": 1000,
-    "num_random_trial": 3,
+    "num_random_trial": 1,
     "target_size": 120
 }

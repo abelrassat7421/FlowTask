@@ -1,5 +1,0 @@
-ABSOLUTE POSITIONS:
-Trigger positions used (y-axis): (786)
-Target centers:  0: (287, 293.0),  1: (816, 293.0),  2: (1345, 293.0)
-Target center boundaries (UPLEFT, UPRIGHT, DOWNRIGHT, DOWNLEFT): 0: ((203, 209), (251, 209), (251, 257), (203, 257)),  1: ((203, 209), (251, 209), (251, 257), (203, 257)),  2: ((203, 209), (251, 209), (251, 257), (203, 257))
-Starting point:  (756, 933)

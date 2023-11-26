@@ -2,33 +2,33 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 import os 
+import shutil
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
-import time
 import numpy as np
 import random
 import sys
+import datetime
 
 import ctypes # Windows implementation
 import subprocess
 
 from Config import *
 from Questions import *
-#from Root import *
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-
+"""
 class RECT(ctypes.Structure):
     _fields_ = [("left", ctypes.c_long),
                 ("top", ctypes.c_long),
                 ("right", ctypes.c_long),
                 ("bottom", ctypes.c_long)]
-                
+"""             
 # Windows implementation 
 # Load user32.dll for blocking mouse
-user32 = ctypes.windll.user32
+#user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -48,8 +48,13 @@ class StartWindow:
         self.seconds_elapsed = 0
         self.time_in_target = 0
         self.can_skip_next_trial = False
+        self.not_in_trial = True
         self.after_wait_enter_target = False
         self.after_wait_end_trial = False
+        now = datetime.datetime.now()
+        self.start_time = now.strftime('%Y_%m_%d_%H_%M_%S')
+        self.decx = 0 # offsets from window decorations 
+        self.decy = 0 
         
         self.Questions = self.config.questions 
         self.Inverted = self.config.inverted # this may be converted into a list 
@@ -65,9 +70,14 @@ class StartWindow:
         self.TimeToCenterTarget = self.config.time_to_center_of_target 
         self.TriangleTime = self.config.triangle_time # Time triangle appears for
         self.NumTrials = self.config.num_random_trial
+        if self.ConfigWithCSV:
+            self.trial_by_trial_config_file_name = "trial_by_trial_config.csv"
+        else:
+            self.trial_by_trial_config_file_name = "generated_trial_by_trial_config.csv"
+        self.ConfigFileCSVPath = os.path.join(self.root.ConfigDirPath, self.trial_by_trial_config_file_name)
         if not self.ConfigWithCSV:
             self.gen_csv_config_file()
-        self.TargetPos, self.MouseAppears, self.TriggerPos, self.TriangleTargetInterval = self.config.read_config(self.root.GenConfigFilePath)
+        self.TargetPos, self.MouseAppears, self.TriggerPos, self.TriangleTargetInterval = self.config.read_config(self.ConfigFileCSVPath)
         # adjusting trigger position (0 top, 1 bottom)
         self.TriggerPos = [1-(trig_pos/100) for trig_pos in self.TriggerPos]
         self.target_pos_dic = {0:0.15, 1:0.5, 2:0.85}
@@ -77,13 +87,16 @@ class StartWindow:
         self.CrossSize = 20
         self.image_tar = Image.open(self.root.TargetFilePath).convert("RGBA")
         image_tri = Image.open(self.root.TriangleFilePath)
+        image_red_tri = Image.open(self.root.RedTriangleFilePath)
         image_cross = Image.open(self.root.CrossFilePath).convert("RGBA")
         self.image_tar_resized = self.image_tar.resize((self.TargetSize, self.TargetSize))
         image_tri_resized = image_tri.resize((TriangleSize, TriangleSize))
+        image_red_tri_resized = image_red_tri.resize((TriangleSize, TriangleSize))
         self.image_cross_resized = image_cross.resize((self.CrossSize, self.CrossSize))
         
         self.img_target_preloaded = ImageTk.PhotoImage(self.image_tar_resized)
         self.img_triangle_preloaded = ImageTk.PhotoImage(image_tri_resized)
+        self.img_red_triangle_preloaded = ImageTk.PhotoImage(image_red_tri_resized)
         self.img_cross_preloaded = ImageTk.PhotoImage(self.image_cross_resized)
 
         # Create a canvas that spans the entire width of the window 
@@ -96,6 +109,7 @@ class StartWindow:
         self.frm_starting_block.place(relx=0.5, rely=1, anchor='s')
         
         self.lbl_triangle = tk.Label(master=self.canvas)
+        self.lbl_red_triangle = tk.Label(master=self.canvas)
         self.lbl_cross = tk.Label(master=self.canvas, bg="#3E3C44", borderwidth=0)
         self.lbl_cross.place(relx=0.5, rely=0.95, anchor='center')
         self.lbl_cross.config(image=self.img_cross_preloaded)
@@ -103,9 +117,27 @@ class StartWindow:
         self.root.update_idletasks()
         self.cross_center = (round(0.5*self.screen_width), round(0.95*self.screen_height))
 
+        # Copy of configuration in current output directory
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+        json_config_file_name = "config.json"
+        dir_output = "Output"
+        dir_current_output = f"Output_{self.start_time}"
+        NewOuputPath = os.path.join(dir_path, dir_output, dir_current_output)
+        os.makedirs(NewOuputPath)
+        dir_trajectories = "Trajectories"
+        dir_answers = "Answers"
+        NewDirTraject = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories)
+        NewDirAnswers = os.path.join(dir_path, dir_output, dir_current_output, dir_answers)
+        os.makedirs(NewDirTraject)
+        os.makedirs(NewDirAnswers)
+        CopyConfigByTrialFilePath = os.path.join(dir_path, dir_output, dir_current_output, self.trial_by_trial_config_file_name)
+        CopyJsonFilePath = os.path.join(dir_path, dir_output, dir_current_output, json_config_file_name)
+        shutil.copy(self.ConfigFileCSVPath, CopyConfigByTrialFilePath)
+        shutil.copy(self.root.ConfigFilePath, CopyJsonFilePath)
+
         # Bind space bar to move to the following trial
         self.root.bind("<space>", self.on_space_press)
-
+        # Return to application menu
         self.root.bind("<Return>", self.on_enter_key)
         
         '''
@@ -128,52 +160,51 @@ class StartWindow:
         self.trigger_line = self.canvas.create_line(0, self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], self.canvas.winfo_width(), self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], fill="black", dash=(10))
 
     def capture_trajectory(self, sampling_rate=100): 
-        coordinates = []
-        img = Image.new("RGB", (self.screen_width, self.screen_height), "white")
-        draw = ImageDraw.Draw(img)
+        self.coordinates = []
         self.root.update_idletasks()
+        self.img = Image.new("RGB", (self.screen_width, self.screen_height), "white")
+        draw = ImageDraw.Draw(self.img)
         _, _, _, a = self.image_tar_resized.split()
-        img.paste(self.image_tar_resized, (round(self.lbl_target.winfo_rootx() - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty() - 0.4*self.TargetSize)), mask=a)
+        self.img.paste(self.image_tar_resized, (round(self.lbl_target.winfo_rootx()), round(self.lbl_target.winfo_rooty())), mask=a)
         _, _, _, a = self.image_cross_resized.split()
-        img.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
+        self.img.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
 
         self.interval = int(1000 / sampling_rate) # in ms
-        self.start_time = time.time()
         # Store the previous position to draw a line between points
         prev_x, prev_y = pyautogui.position()
-        coordinates.append((prev_x, prev_y))
+        
+        self.coordinates.append((prev_x, prev_y))
 
         self.recording = True
-        self.record_and_draw_last_traj_pt(draw, coordinates, prev_x, prev_y, img)
+        self.record_and_draw_last_traj_pt(draw, prev_x, prev_y)
 
-    def record_and_draw_last_traj_pt(self, draw, coordinates, prev_x, prev_y, img):
+    def record_and_draw_last_traj_pt(self, draw, prev_x, prev_y):
         if self.recording == True:
             x, y = pyautogui.position()
-            coordinates.append((x, y))
+            self.coordinates.append((x, y))
             # Draw a line from the previous position to the current position
             draw.line([(prev_x, prev_y), (x, y)], fill="black", width=2)
             if self.target_center_reached == True: 
                 self.recording = False
-                self.save_trajectory_info(coordinates, img)
-            self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, coordinates, x, y, img))
+                self.save_trajectory_info(self.coordinates, self.img)
+            self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, x, y))
         
     def save_trajectory_info(self, coordinates, img):
         num = str(self.trial_counter + 1).zfill(2)
         traj_file_name = f"mouse_trajectory_{num}.png"
         dir_path = os.path.dirname(os.path.abspath(__file__))
         dir_output = "Output"
+        dir_current_output = f"Output_{self.start_time}"
         dir_trajectories = "Trajectories"
-        TrajFilePath = os.path.join(dir_path, dir_output, dir_trajectories, traj_file_name)
+        TrajFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name)
         traj_coord_file_name = f"mouse_trajectory_coord_{num}.csv"
-        TrajCoordFilePath = os.path.join(dir_path, dir_output, dir_trajectories, traj_coord_file_name)
+        TrajCoordFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_coord_file_name)
         
         with open(TrajCoordFilePath, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['X', 'Y']) 
             writer.writerows(coordinates)  
-        #print(f'Data saved to {TrajCoordFilePath}')
         img.save(TrajFilePath)
-        #print("Trajectory saved as", f"mouse_trajectory_{num}.png")
 
     def is_point_in_start_block(self, x, y):
         frame_x = self.frm_starting_block.winfo_rootx()
@@ -201,6 +232,7 @@ class StartWindow:
                 self.root.after_cancel(self.after_wait_enter_target)
             if self.after_wait_end_trial:
                 self.root.after_cancel(self.after_wait_end_trial)
+            self.can_skip_next_trial = False
             self.move_next_trial()
     
     def on_enter_key(self, event):
@@ -209,10 +241,10 @@ class StartWindow:
     def pre_trial_questions_and_start(self):
         is_there_quest, quest_type = self.is_there_question_type("pre")
         if is_there_quest:
-            questions_window = QuestionsWindow(master=self.root, trial_num=self.trial_counter, timing="pre", quest_type=quest_type)
+            questions_window = QuestionsWindow(master=self.root, trial_num=self.trial_counter, timing="pre", quest_type=quest_type, start_time=self.start_time)
             self.root.wait_window(questions_window.window)  
         if self.TriggerVisible and not self.trigger_set: 
-            self.draw_line() 
+            self.draw_line()
             self.trigger_set = True 
         self.move_mouse_to_start()
 
@@ -221,9 +253,13 @@ class StartWindow:
         pyautogui.moveTo(self.cross_center)
         self.lbl_target = tk.Label(master=self.canvas, borderwidth=0)
         self.lbl_decoy_target = tk.Label(master=self.canvas)
-        self.lbl_target.place(relx=self.target_pos_dic[self.TargetPos[self.trial_counter]], rely=0.2, anchor='center') 
+        self.lbl_target.place(relx=self.target_pos_dic[self.TargetPos[self.trial_counter]], rely=0.2, width=self.TargetSize, height=self.TargetSize, anchor='center')
+        self.decx = self.lbl_target.winfo_rootx()
+        self.decy = self.lbl_target.winfo_rooty()
+
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
-        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        self.root.config(cursor="")
+        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):
@@ -235,6 +271,7 @@ class StartWindow:
                 quest_type.append(entry) 
         return is_there_quest, quest_type 
 
+    # TODO NO LONGER IN USE
     def is_target_center_reached(self, x, y):
         target_x = self.lbl_target.winfo_rootx()
         target_y = self.lbl_target.winfo_rooty()
@@ -276,7 +313,7 @@ class StartWindow:
             self.lbl_decoy_target.place_forget()
             # set new target image
             self.lbl_target.config(image=self.img_target_preloaded)
-            self.lbl_target.image = self.img_target_preloaded
+            self.lbl_target['image'] = self.img_target_preloaded
             self.target_set = True
             self.can_skip_next_trial = True
             self.wait_enter_target()
@@ -307,17 +344,19 @@ class StartWindow:
             self.after_wait_end_trial = self.root.after(10, lambda: self.wait_end_trial())
 
     def move_next_trial(self):
-        if not self.MouseAppears[self.trial_counter]:
-            self.root.config(cursor="")
         if self.Inverted:
             subprocess.run(["taskkill", "/IM", "sakasa.exe", "/F"])
+        self.root.config(cursor="none")
         is_there_quest, quest_type = self.is_there_question_type("post")
         if is_there_quest:
-            questions_window = QuestionsWindow(master=self.root, trial_num=self.trial_counter, timing="post", quest_type=quest_type)
+            questions_window = QuestionsWindow(master=self.root, trial_num=self.trial_counter, timing="post", quest_type=quest_type, start_time=self.start_time)
             self.root.wait_window(questions_window.window)  # blocks until questions_window is closed
-        self.trial_counter += 1
         self.seconds_elapsed = 0
         self.time_in_target = 0
+        if self.recording == True: 
+            self.recording = False
+            self.save_trajectory_info(self.coordinates, self.img)
+        self.trial_counter += 1
         self.global_update()
 
     def global_update(self):
@@ -333,22 +372,29 @@ class StartWindow:
             # brief pause between trials
             self.root.after(self.InterTrialTime, lambda: self.pre_trial_questions_and_start()) 
         else:
-            self.lbl_transition = tk.Label(self.canvas, text="Congratulations! You have completed all of the trials",
+            self.lbl_transition = tk.Label(self.canvas, text="Congratulations! You have completed all trials",
             font=("Arial", 24), bg="blue",  fg="white", width=self.canvas.winfo_screenwidth(), height=3)
             self.lbl_transition.pack(anchor="n", fill="x")
+            self.write_absolute_positions()
             self.root.after(5000, lambda: self.restart_window())
 
     def trial_update(self):
         self.seconds_elapsed += 0.1
         # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000):
-            self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
-            self.lbl_triangle.config(image=self.img_triangle_preloaded)
-            self.lbl_triangle.image = self.img_triangle_preloaded
+            if self.MouseAppears[self.trial_counter]:
+                self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                self.lbl_triangle.config(image=self.img_triangle_preloaded)
+                self.lbl_triangle.image = self.img_triangle_preloaded
+            else:
+                self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                self.lbl_red_triangle.config(image=self.img_red_triangle_preloaded)
+                self.lbl_red_triangle.image = self.img_red_triangle_preloaded
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000): 
             self.lbl_triangle.place_forget()
+            self.lbl_red_triangle.place_forget()
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
-            unlock_cursor() # Windows Implementation
+            # unlock_cursor() # Windows Implementation
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
             if self.Inverted: 
@@ -365,7 +411,7 @@ class StartWindow:
         np.random.seed(42)
         dir_path = os.path.dirname(os.path.abspath(__file__))
         config_dir = "Configurations"
-        file_name = 'Re'
+        file_name = 'generated_trial_by_trial_config.csv'
         FilePath = os.path.join(dir_path, config_dir, file_name)
         # 1) Target position (ratios set by D. Zarka)
         target_pos_key = [0, 1, 2] # left, center, right respectively 
@@ -386,9 +432,48 @@ class StartWindow:
             # Write each group of values as a row in the CSV file
             writer.writerows(transposed_data)
 
+
+    def write_absolute_positions(self):
+        # Saving absolute positions of important landmarks under current configurations
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+        dir_output = "Output"
+        dir_current_output = f"Output_{self.start_time}"
+        title = "ABSOLUTE POSITIONS:"
+        abs_trig_pos_list = []
+        trig_list = sorted(set(self.TriggerPos))
+        abs_trig_pos_subtitle = "Trigger positions used (y-axis): "
+        for trig_pos in trig_list:
+           abs_trig_pos_list.append(f"({round((trig_pos)*self.screen_height)})")
+        abs_trig_pos = ',  '.join(abs_trig_pos_list)
+        abs_trig_pos = abs_trig_pos_subtitle + abs_trig_pos 
+        ypos_target_center = round(0.2*self.screen_height)
+        abs_target_centers = f"Target centers:  0: ({round(self.target_pos_dic[0]*self.screen_width + self.decx)}, {ypos_target_center + self.decy}),  1: ({round(self.target_pos_dic[1]*self.screen_width + self.decx)}, {ypos_target_center + self.decy}),  2: ({round(self.target_pos_dic[2]*self.screen_width + self.decx)}, {ypos_target_center + self.decy})"
+        # Readjust if target icon is changed
+        abs_target_boundaries_list = []
+        abs_target_boundaries_subtitle = "Target center boundaries (UPLEFT, UPRIGHT, DOWNRIGHT, DOWNLEFT): "
+        for i in range(3): 
+           abs_target_boundaries_list.append(f"{i}: (({round(self.target_pos_dic[i]*self.screen_width - self.TargetSize/5 + self.decx)}, {round(ypos_target_center - self.TargetSize/5 + self.decy)}), ({round(self.target_pos_dic[i]*self.screen_width + self.TargetSize/5 + self.decx)}, {round(ypos_target_center - self.TargetSize/5 + self.decy)}), ({round(self.target_pos_dic[i]*self.screen_width + self.TargetSize/5 + self.decx)}, {round(ypos_target_center + self.TargetSize/5 + self.decy)}), ({round(self.target_pos_dic[i]*self.screen_width - self.TargetSize/5 + self.decx)}, {round(ypos_target_center + self.TargetSize/5 + self.decy)}))")
+        abs_target_boundaries = ',  '.join(abs_target_boundaries_list)
+        abs_target_boundaries = abs_target_boundaries_subtitle + abs_target_boundaries
+        abs_starting_point = f"Starting point:  ({self.cross_center[0]}, {self.cross_center[1]})"
+        
+        abs_positions_file_name = "absolute_positions.txt"
+        AbsPositionsFilePath = os.path.join(dir_path, dir_output, dir_current_output, abs_positions_file_name)
+        with open(AbsPositionsFilePath, 'w') as file:
+            # Write each string to the file followed by a newline character
+            file.write(title + '\n')
+            file.write(abs_trig_pos + '\n')
+            file.write(abs_target_centers + '\n')
+            file.write(abs_target_boundaries + '\n')
+            file.write(abs_starting_point + '\n')
+
+# Windows Implementation
+"""
 def lock_cursor_to_rect(x, y, width, height):
     rect = RECT(x, y, x + width, y + height)
     user32.ClipCursor(ctypes.byref(rect))
 
 def unlock_cursor():
     user32.ClipCursor(None)
+
+"""
