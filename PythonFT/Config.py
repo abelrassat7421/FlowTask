@@ -14,12 +14,15 @@ class Config:
             self.inverted = data["inverted"]
             self.trigger_visible = data["trigger_visible"]
             self.configure_with_csv = data["configure_with_csv"]
+            self.direction_triangles = data["direction_triangles"]
             if not self.configure_with_csv:
                 self.mouse_appear_freq = data["mouse_appear_freq"]
                 self.num_triggers = data["num_triggers"]
                 self.trigger_values = [val for val in data["trigger_values"]] 
                 self.num_triangle_target_interval = data["num_triangle_target_interval"]
                 self.time_intervals = data["time_intervals"]
+                if self.direction_triangles:
+                    self.freq_false_directions = data["freq_false_directions"]
             self.trajectory_sampling_rate = data["trajectory_sampling_rate"]
             self.inter_trial_time = data["inter-trial_time"]
             self.preparation_time = data["preparation_time"]
@@ -34,6 +37,7 @@ class Config:
         self.mouse_appears = []
         self.trigger_pos = []
         self.triangle_target_interval = []
+        self.triangle_direction = []
 
         # Open the CSV file for reading
         with open(gen_config_file, 'r', newline='', encoding='utf-8') as file:
@@ -43,6 +47,8 @@ class Config:
                 self.mouse_appears.append(int(row[1]))
                 self.trigger_pos.append(float(row[2]))
                 self.triangle_target_interval.append(int(row[3]))
+                if self.direction_triangles:
+                   self.triangle_direction.append(int(row[4]))
 
             # testing if the values are acceptable
             N = self.num_random_trial
@@ -57,13 +63,17 @@ class Config:
                     raise ValueError("Values in the second column of the trial_by_trial_config.csv file must be either 0 or 1 (whether the mouse appears or not)")
                 elif not all(x >= 0 or x <= 100 for x in self.trigger_pos):
                     raise ValueError("Values in the third column of the trial_by_trial_config.csv file must be between 0 and 100 (percentage where 0% is the bottom of the screen and 100% the top)")
+                elif self.direction_triangles and N != len(self.triangle_direction):
+                    raise ValueError("The fifth column of the trial_by_trial_config.csv file must be filled. Values must be set to 0, 1, 2 as for target position. If the values of the fifth column match those of the first column, there will be no false directions given.")
                 
             except ValueError as e:
                 response = messagebox.showwarning("Error", str(e) + general_error_mess)
                 if response == 'ok':
                    self.root.destroy()
-
-        return self.target_pos, self.mouse_appears, self.trigger_pos, self.triangle_target_interval
+        if self.direction_triangles: 
+            return self.target_pos, self.mouse_appears, self.trigger_pos, self.triangle_target_interval, self.triangle_direction
+        else:
+            return self.target_pos, self.mouse_appears, self.trigger_pos, self.triangle_target_interval
 
     """
     # Optional: Method to display the configuration

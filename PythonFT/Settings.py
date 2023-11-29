@@ -45,6 +45,7 @@ class SettingsWindow:
         lbl_num_quest = tk.Label(master=self.frm_settings, text="Number of questions:")
         lbl_inverted = tk.Label(master=self.frm_settings, text="Is Inverted?:")
         lbl_trigger_visible = tk.Label(master=self.frm_settings, text="Trigger Visible?:")
+        lbl_direction_triangles = tk.Label(master=self.frm_settings, text="Have triangles for direction?:") 
         lbl_configure_with_csv = tk.Label(master=self.frm_settings, text="Configure csv manually?:")
         lbl_trajectory_sampling_rate = tk.Label(master=self.frm_settings, text="Trajectory sampling rate (Hz):") 
         lbl_preparation_time = tk.Label(master=self.frm_settings, text="Preparation time before triangle appears:")
@@ -65,17 +66,18 @@ class SettingsWindow:
         canvas1.grid(row=2, column=0, sticky="ew", pady=(0, 0))
         lbl_inverted.grid(row=3, column=0, pady=2, sticky='w')
         lbl_trigger_visible.grid(row=4, column=0, pady=5, sticky='w')
-        canvas2.grid(row=5, column=0, sticky="ew", pady=(0, 0))
-        lbl_configure_with_csv.grid(row=6, column=0, pady=2, sticky='w')
-        canvas3.grid(row=8, column=0, sticky="ew", pady=(0, 0))
-        lbl_trajectory_sampling_rate.grid(row=9, column=0, pady=2, sticky='w')
-        lbl_preparation_time.grid(row=10, column=0, pady=2, sticky='w')
-        lbl_inter_trial_time.grid(row=11, column=0, pady=2, sticky='w')
-        lbl_time_to_center.grid(row=12, column=0, pady=2, sticky='w')
-        lbl_triangle_time.grid(row=13, column=0, pady=2, sticky='w')
-        lbl_num_random_trial.grid(row=14, column=0, pady=2, sticky='w')
-        lbl_target_size.grid(row=15, column=0, pady=2, sticky='w')
-        canvas4.grid(row=16, column=0, sticky="ew", pady=(0, 0))
+        lbl_direction_triangles.grid(row=5, column=0, pady=2, sticky='w')
+        canvas2.grid(row=6, column=0, sticky="ew", pady=(0, 0))
+        lbl_configure_with_csv.grid(row=7, column=0, pady=2, sticky='w')
+        canvas3.grid(row=9, column=0, sticky="ew", pady=(0, 0))
+        lbl_trajectory_sampling_rate.grid(row=10, column=0, pady=2, sticky='w')
+        lbl_preparation_time.grid(row=11, column=0, pady=2, sticky='w')
+        lbl_inter_trial_time.grid(row=12, column=0, pady=2, sticky='w')
+        lbl_time_to_center.grid(row=13, column=0, pady=2, sticky='w')
+        lbl_triangle_time.grid(row=14, column=0, pady=2, sticky='w')
+        lbl_num_random_trial.grid(row=15, column=0, pady=2, sticky='w')
+        lbl_target_size.grid(row=16, column=0, pady=2, sticky='w')
+        canvas4.grid(row=17, column=0, sticky="ew", pady=(0, 0))
         
         # drawing the lines
         canvas1.create_line(0, 1, canvas1.winfo_reqwidth(), 1, fill="black")
@@ -89,6 +91,7 @@ class SettingsWindow:
         self.clk_num_quest = tk.IntVar()
         self.clk_inverted = tk.BooleanVar()
         self.clk_trigger_visible = tk.BooleanVar()
+        self.clk_direction_triangles = tk.BooleanVar()
         self.clk_configure_with_csv = tk.BooleanVar()
         
         # creating entry boxes
@@ -107,6 +110,7 @@ class SettingsWindow:
             self.clk_num_quest.set(data["num_questions"])
             self.clk_inverted.set(data["inverted"])
             self.clk_trigger_visible.set(data["trigger_visible"])
+            self.clk_direction_triangles.set(data["direction_triangles"])
             self.clk_configure_with_csv.set(data["configure_with_csv"])
             self.ent_trajectory_sampling_rate.insert(0, data["trajectory_sampling_rate"])
             self.ent_preparation_time.insert(0, data["preparation_time"])
@@ -120,20 +124,22 @@ class SettingsWindow:
         drp_num_quest = ttk.OptionMenu(self.frm_settings, self.clk_num_quest, self.clk_num_quest.get(), *range(0, 11), command=self.update_questions)
         drp_inverted = ttk.OptionMenu(self.frm_settings, self.clk_inverted, self.clk_inverted.get(), *self.optionTF) 
         drp_trigger_visible = ttk.OptionMenu(self.frm_settings, self.clk_trigger_visible, self.clk_trigger_visible.get(), *self.optionTF)
+        drp_direction_triangles = ttk.OptionMenu(self.frm_settings, self.clk_direction_triangles, self.clk_direction_triangles.get(), *self.optionTF, command=self.update_triangle_direction_param)
         drp_configure_with_csv = ttk.OptionMenu(self.frm_settings, self.clk_configure_with_csv, self.clk_configure_with_csv.get(), *self.optionTF, command=self.update_csv_config_options)
 
         # placing option menus and entry boxes
         drp_num_quest.grid(row=0, column=1, pady=2, padx=10, sticky='w')
         drp_inverted.grid(row=3, column=1, pady=2, padx=10, sticky='w')
         drp_trigger_visible.grid(row=4, column=1, pady=2, padx=10, sticky='w')
-        drp_configure_with_csv.grid(row=6, column=1, pady=2, padx=10, sticky='w')
-        self.ent_trajectory_sampling_rate.grid(row=9, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_preparation_time.grid(row=10, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_inter_trial_time.grid(row=11, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_time_to_center.grid(row=12, column=1, pady=2, padx=10, sticky='w')
-        self.ent_triangle_time.grid(row=13, column=1, pady=2, padx=10, sticky='w')
-        self.ent_num_random_trial.grid(row=14, column=1, pady=2, padx=10, sticky='w')
-        self.ent_target_size.grid(row=15, column=1, pady=2, padx=10, sticky='w')
+        drp_direction_triangles.grid(row=5, column=1, pady=2, padx=10,  sticky='w')
+        drp_configure_with_csv.grid(row=7, column=1, pady=2, padx=10, sticky='w')
+        self.ent_trajectory_sampling_rate.grid(row=10, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_preparation_time.grid(row=11, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_inter_trial_time.grid(row=12, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_time_to_center.grid(row=13, column=1, pady=2, padx=10, sticky='w')
+        self.ent_triangle_time.grid(row=14, column=1, pady=2, padx=10, sticky='w')
+        self.ent_num_random_trial.grid(row=15, column=1, pady=2, padx=10, sticky='w')
+        self.ent_target_size.grid(row=16, column=1, pady=2, padx=10, sticky='w')
 
         # Create a frame to hold the Entry widgets and Option Menus that depend on other Option Menus 
         # i.e., second order widgets
@@ -145,10 +151,11 @@ class SettingsWindow:
             "num_triggers": 0,
             "trigger_values": [],
             "num_triangle_target_interval": 0,
-            "time_intervals": []
+            "time_intervals": [], 
+            "freq_false_directions": 0,
             }
         self.frame_questions.grid(row=1, column=0, columnspan=3, pady=2, padx=10,  sticky='w')
-        self.frame_not_config_with_csv.grid(row=7, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
+        self.frame_not_config_with_csv.grid(row=8, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
         
         # Adding default values from json for second order widgets 
         with open(json_file, 'r') as file:
@@ -176,7 +183,7 @@ class SettingsWindow:
                 self.ent_mouse_appear_freq.insert(0, data["mouse_appear_freq"])
                 drp_num_triggers = ttk.OptionMenu(self.frame_not_config_with_csv, self.clk_num_triggers, self.clk_num_triggers.get(), *range(1, 4), command=self.update_trigger_entries)
                 drp_num_triangle_target_interval = ttk.OptionMenu(self.frame_not_config_with_csv, self.clk_num_triangle_target_interval, self.clk_num_triangle_target_interval.get(), *range(1, 4), command=self.update_time_intervals_entries)
-
+                
                 self.auto_config_param["mouse_appear_freq"] = self.ent_mouse_appear_freq
                 self.auto_config_param["num_triggers"] = self.clk_num_triggers
                 self.auto_config_param["num_triangle_target_interval"] = self.clk_num_triangle_target_interval
@@ -187,10 +194,14 @@ class SettingsWindow:
                 
                 self.entry_frame_triggers = ttk.Frame(self.frame_not_config_with_csv)
                 self.entry_frame_time_intervals = ttk.Frame(self.frame_not_config_with_csv)
+                self.entry_frame_triangle_direction = ttk.Frame(self.frame_not_config_with_csv)
                 self.entry_values_triggers = []
                 self.entry_values_time_intervals = []
+                self.ent_freq_false_directions = ttk.Entry(self.frame_not_config_with_csv)
+                self.ent_freq_false_directions.insert(0, 0)
                 self.entry_frame_triggers.grid(row=3, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
                 self.entry_frame_time_intervals.grid(row=5, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
+                self.entry_frame_triangle_direction.grid(row=7, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
     
                 for i in range(int(self.clk_num_triggers.get())):
                     label = ttk.Label(self.entry_frame_triggers, text=f"Position {i + 1} (%)")
@@ -207,9 +218,17 @@ class SettingsWindow:
                     self.entry_values_time_intervals.append(entry)
                     label.grid(row=i, column=0, pady=2, padx=10, sticky='w')
                     entry.grid(row=i, column=1, pady=2, padx=10, sticky='w')
+                
+                if self.clk_direction_triangles.get():
+                    lbl_freq_false_directions = tk.Label(master=self.entry_frame_triangle_direction, text="Frequency of false directions (%):") 
+                    lbl_freq_false_directions.grid(row=0, column=0, pady=2, sticky='w')
+                    self.ent_freq_false_directions = ttk.Entry(self.entry_frame_triangle_direction)
+                    self.ent_freq_false_directions.insert(0, data["freq_false_directions"])
+                    self.ent_freq_false_directions.grid(row=0, column=1, pady=2, sticky='w')
 
                 self.auto_config_param["trigger_values"] = self.entry_values_triggers
                 self.auto_config_param["time_intervals"] = self.entry_values_time_intervals
+                self.auto_config_param["freq_false_directions"] = self.ent_freq_false_directions
                 
             for i in range(int(self.clk_num_quest.get())):
                 label = ttk.Label(self.frame_questions, text=f"Question {i + 1}:")
@@ -239,16 +258,16 @@ class SettingsWindow:
                 drp_answer_range.grid(row=4*i + i+3, column=2, pady=2, padx=10, sticky='w')
 
         btn_open_config = ttk.Button(self.frm_settings, text="Open config file", command=self.open_config)
-        btn_open_config.grid(row=17, column=0, pady=10, padx=20, sticky='w')
+        btn_open_config.grid(row=18, column=0, pady=10, padx=20, sticky='w')
 
         btn_save = ttk.Button(self.frm_settings, text="Save", command=self.save_settings)
-        btn_save.grid(row=18, column=0, pady=2, padx=20, sticky='w')
+        btn_save.grid(row=19, column=0, pady=2, padx=20, sticky='w')
 
         btn_close = ttk.Button(self.frm_settings, text="Close", command=self.close_settings_window)
-        btn_close.grid(row=19, column=0, pady=2, padx=20, sticky='w')
+        btn_close.grid(row=20, column=0, pady=2, padx=20, sticky='w')
 
         lbl_remark = tk.Label(master=self.frm_settings, text="NB: Pour référence, la croix de départ se situe à 5% de la hauteur de l'écran et tous les temps sont en (ms).", font=("Arial", 12, "italic"))
-        lbl_remark.grid(row=20, column=0, pady=10, padx=20, sticky='w')
+        lbl_remark.grid(row=21, column=0, pady=10, padx=20, sticky='w')
 
     def on_configure(self, event):
         # Set the scroll region after UI has been configured
@@ -269,7 +288,9 @@ class SettingsWindow:
             canvas.create_line(0, 1, canvas.winfo_reqwidth(), 1, fill="black")
 
             self.clk_num_triggers = tk.IntVar()
+            self.clk_num_triggers.set(1)
             self.clk_num_triangle_target_interval = tk.IntVar() 
+            self.clk_num_triangle_target_interval.set(1)
             self.ent_mouse_appear_freq = ttk.Entry(self.frame_not_config_with_csv)
 
             drp_num_triggers = ttk.OptionMenu(self.frame_not_config_with_csv, self.clk_num_triggers, self.clk_num_triggers.get(), *range(1, 4), command=self.update_trigger_entries)
@@ -282,13 +303,17 @@ class SettingsWindow:
             self.ent_mouse_appear_freq.grid(row=0, column=1, pady=2, padx=10, sticky='w')
             drp_num_triggers.grid(row=2, column=1, pady=2, padx=10,  sticky='w')
             drp_num_triangle_target_interval.grid(row=4, column=1, pady=2, padx=10,  sticky='w')
-            
+
             self.entry_frame_triggers = ttk.Frame(self.frame_not_config_with_csv)
             self.entry_frame_time_intervals = ttk.Frame(self.frame_not_config_with_csv)
+            self.entry_frame_triangle_direction = ttk.Frame(self.frame_not_config_with_csv)
             self.entry_values_triggers = []
             self.entry_values_time_intervals = []
+            self.ent_freq_false_directions = ttk.Entry(self.frame_not_config_with_csv)
+            self.ent_freq_false_directions.insert(0, 0)
             self.entry_frame_triggers.grid(row=3, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
             self.entry_frame_time_intervals.grid(row=5, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
+            self.entry_frame_triangle_direction.grid(row=6, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
 
             for i in range(int(self.clk_num_triggers.get())):
                 label = ttk.Label(self.entry_frame_triggers, text=f"Position {i + 1} (%)")
@@ -303,9 +328,17 @@ class SettingsWindow:
                 self.entry_values_time_intervals.append(entry)
                 label.grid(row=i, column=0, pady=2, padx=10, sticky='w')
                 entry.grid(row=i, column=1, pady=2, padx=10, sticky='w')
-
+            
+            if self.clk_direction_triangles.get():
+                lbl_freq_false_directions = tk.Label(master=self.entry_frame_triangle_direction, text="Frequency of false directions (%):") 
+                lbl_freq_false_directions.grid(row=0, column=0, pady=2, sticky='w')
+                self.ent_freq_false_directions = ttk.Entry(self.entry_frame_triangle_direction)
+                self.ent_freq_false_directions.grid(row=0, column=1, pady=2, sticky='w')
+            
             self.auto_config_param["trigger_values"] = self.entry_values_triggers
             self.auto_config_param["time_intervals"] = self.entry_values_time_intervals
+            self.auto_config_param["freq_false_directions"] = self.ent_freq_false_directions
+
         else:
             # Destroy existing Entry widgets
             for widget in self.frame_not_config_with_csv.winfo_children():
@@ -368,13 +401,24 @@ class SettingsWindow:
             label.grid(row=i, column=0, pady=2, padx=10, sticky='w')
             entry.grid(row=i, column=1, pady=2, padx=10, sticky='w')
 
+    def update_triangle_direction_param(self, value):
+        # delete this function and have changes of value display frequency of false directions if config manually false and direction triangles true
+        if self.clk_direction_triangles.get() and not self.clk_configure_with_csv.get():
+            lbl_freq_false_directions = tk.Label(master=self.entry_frame_triangle_direction, text="Frequency of false directions (%):") 
+            lbl_freq_false_directions.grid(row=0, column=0, pady=2, sticky='w')
+            self.ent_freq_false_directions = ttk.Entry(self.entry_frame_triangle_direction)
+            self.ent_freq_false_directions.grid(row=0, column=1, pady=2, sticky='w')
+            self.auto_config_param["freq_false_directions"] = self.ent_freq_false_directions
+        else:
+            # Destroy existing Entry widgets
+            for widget in self.entry_frame_triangle_direction.winfo_children():
+               widget.destroy() 
+
     def open_config(self):
         subprocess.run(["open", self.ConfigFilePath])
         #os.startfile(self.ConfigFilePath) # Windows Implementation
 
-    def save_settings(self):
-        # Gather user input (for demonstration purposes, I'm assuming Checkbuttons for the questions)
-        
+    def save_settings(self):        
         val_num_questions = self.clk_num_quest.get()
         val_questions = []
         for quest in self.questions:
@@ -392,6 +436,7 @@ class SettingsWindow:
             })
         val_inverted = self.clk_inverted.get()
         val_trigger_visible = self.clk_trigger_visible.get()
+        val_direction_triangles = self.clk_direction_triangles.get()
         val_configure_with_csv = self.clk_configure_with_csv.get()
         if not val_configure_with_csv:
             val_mouse_appear_freq = self.auto_config_param["mouse_appear_freq"].get()
@@ -399,6 +444,7 @@ class SettingsWindow:
             val_triggers = [float(entry.get()) for entry in self.auto_config_param["trigger_values"]]
             val_num_triangle_target_interval = self.auto_config_param["num_triangle_target_interval"].get()
             val_time_intervals = [int(entry.get()) for entry in self.auto_config_param["time_intervals"]]
+            val_freq_false_directions = self.auto_config_param["freq_false_directions"].get()
         val_trajectory_sampling_rate = self.ent_trajectory_sampling_rate.get()
         val_preparation_time = self.ent_preparation_time.get()
         val_inter_trial_time = self.ent_inter_trial_time.get()
@@ -420,6 +466,7 @@ class SettingsWindow:
         data["questions"] = val_questions
         data["inverted"] = val_inverted
         data["trigger_visible"] = val_trigger_visible
+        data["direction_triangles"] = val_direction_triangles
         data["configure_with_csv"] = val_configure_with_csv
         if not val_configure_with_csv:
             data["mouse_appear_freq"] = float(val_mouse_appear_freq)
@@ -427,6 +474,7 @@ class SettingsWindow:
             data["trigger_values"] = val_triggers
             data["num_triangle_target_interval"] = val_num_triangle_target_interval
             data["time_intervals"] = val_time_intervals
+            data["freq_false_directions"] = float(val_freq_false_directions)
         data["trajectory_sampling_rate"] = int(val_trajectory_sampling_rate)
         data["preparation_time"] = int(val_preparation_time)
         data["inter-trial_time"] = int(val_inter_trial_time)

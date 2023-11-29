@@ -59,11 +59,14 @@ class StartWindow:
         self.Questions = self.config.questions 
         self.Inverted = self.config.inverted # this may be converted into a list 
         self.TriggerVisible = self.config.trigger_visible 
+        self.DirectionTriangles = self.config.direction_triangles
         self.ConfigWithCSV = self.config.configure_with_csv 
         if not self.ConfigWithCSV: 
             self.MouseAppearFreq = self.config.mouse_appear_freq
             self.TriggerPosVal = self.config.trigger_values 
             self.TriangleTargetIntervalVal = self.config.time_intervals # Time between the triangle disappearing and target appearing (mouse de-frozen)
+            if self.DirectionTriangles:
+                self.FreqFalseDirections = self.config.freq_false_directions
         self.TrajSamplingRate = self.config.trajectory_sampling_rate
         self.PreparationTime = self.config.preparation_time # Time before triangle appears 
         self.InterTrialTime = self.config.inter_trial_time # Time between pre and post questions
@@ -76,8 +79,11 @@ class StartWindow:
             self.trial_by_trial_config_file_name = "generated_trial_by_trial_config.csv"
         self.ConfigFileCSVPath = os.path.join(self.root.ConfigDirPath, self.trial_by_trial_config_file_name)
         if not self.ConfigWithCSV:
-            self.gen_csv_config_file()
-        self.TargetPos, self.MouseAppears, self.TriggerPos, self.TriangleTargetInterval = self.config.read_config(self.ConfigFileCSVPath)
+               self.gen_csv_config_file()
+        if self.DirectionTriangles:
+            self.TargetPos, self.MouseAppears, self.TriggerPos, self.TriangleTargetInterval, self.TriangleDirection = self.config.read_config(self.ConfigFileCSVPath)
+        else:
+            self.TargetPos, self.MouseAppears, self.TriggerPos, self.TriangleTargetInterval = self.config.read_config(self.ConfigFileCSVPath)
         # adjusting trigger position (0 top, 1 bottom)
         self.TriggerPos = [1-(trig_pos/100) for trig_pos in self.TriggerPos]
         self.target_pos_dic = {0:0.15, 1:0.5, 2:0.85}
@@ -88,15 +94,27 @@ class StartWindow:
         self.image_tar = Image.open(self.root.TargetFilePath).convert("RGBA")
         image_tri = Image.open(self.root.TriangleFilePath)
         image_red_tri = Image.open(self.root.RedTriangleFilePath)
+        image_tri_90 = Image.open(self.root.TriangleRot90Path)
+        image_tri_270 = Image.open(self.root.TriangleRot270Path)
+        image_red_tri_90 = Image.open(self.root.RedTriangleRot90Path)
+        image_red_tri_270 = Image.open(self.root.RedTriangleRot270Path)
         image_cross = Image.open(self.root.CrossFilePath).convert("RGBA")
         self.image_tar_resized = self.image_tar.resize((self.TargetSize, self.TargetSize))
         image_tri_resized = image_tri.resize((TriangleSize, TriangleSize))
         image_red_tri_resized = image_red_tri.resize((TriangleSize, TriangleSize))
+        image_tri_90_resized = image_tri_90.resize((TriangleSize, TriangleSize))
+        image_tri_270_resized = image_tri_270.resize((TriangleSize, TriangleSize))
+        image_red_tri_90_resized = image_red_tri_90.resize((TriangleSize, TriangleSize))
+        image_red_tri_270_resized = image_red_tri_270.resize((TriangleSize, TriangleSize))
         self.image_cross_resized = image_cross.resize((self.CrossSize, self.CrossSize))
         
         self.img_target_preloaded = ImageTk.PhotoImage(self.image_tar_resized)
         self.img_triangle_preloaded = ImageTk.PhotoImage(image_tri_resized)
         self.img_red_triangle_preloaded = ImageTk.PhotoImage(image_red_tri_resized)
+        self.img_triangle_90_preloaded = ImageTk.PhotoImage(image_tri_90_resized)
+        self.img_triangle_270_preloaded = ImageTk.PhotoImage(image_tri_270_resized)
+        self.img_red_triangle_90_preloaded = ImageTk.PhotoImage(image_red_tri_90_resized)
+        self.img_red_triangle_270_preloaded = ImageTk.PhotoImage(image_red_tri_270_resized)
         self.img_cross_preloaded = ImageTk.PhotoImage(self.image_cross_resized)
 
         # Create a canvas that spans the entire width of the window 
@@ -109,6 +127,8 @@ class StartWindow:
         self.frm_starting_block.place(relx=0.5, rely=1, anchor='s')
         
         self.lbl_triangle = tk.Label(master=self.canvas)
+        #self.lbl_triangle_90 = tk.Label(master=self.canvas)
+        #self.lbl_triangle_270 = tk.Label(master=self.canvas)
         self.lbl_red_triangle = tk.Label(master=self.canvas)
         self.lbl_cross = tk.Label(master=self.canvas, bg="#3E3C44", borderwidth=0)
         self.lbl_cross.place(relx=0.5, rely=0.95, anchor='center')
@@ -270,23 +290,6 @@ class StartWindow:
                 is_there_quest = True
                 quest_type.append(entry) 
         return is_there_quest, quest_type 
-
-    # TODO NO LONGER IN USE
-    def is_target_center_reached(self, x, y):
-        target_x = self.lbl_target.winfo_rootx()
-        target_y = self.lbl_target.winfo_rooty()
-        target_width = self.TargetSize
-        target_height = self.TargetSize
-        center_x = target_x + target_width / 2
-        center_y = target_y + target_height / 2
-        # the center of the target icon is 1/5 its size
-        region_width = target_width / 5
-        region_height = target_height / 5
-        in_center_region = (
-            center_x - region_width / 2 <= x <= center_x + region_width / 2 and
-            center_y - region_height / 2 <= y <= center_y + region_height / 2
-        )
-        return in_center_region
     
     def is_target_reached(self, x, y):
         target_x = self.lbl_target.winfo_rootx()
@@ -383,13 +386,31 @@ class StartWindow:
         # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000):
             if self.MouseAppears[self.trial_counter]:
-                self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
-                self.lbl_triangle.config(image=self.img_triangle_preloaded)
-                self.lbl_triangle.image = self.img_triangle_preloaded
+                if self.TriangleDirection[self.trial_counter] == 0:
+                   self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_triangle.config(image=self.img_triangle_90_preloaded)
+                   self.lbl_triangle.image = self.img_triangle_90_preloaded
+                elif self.TriangleDirection[self.trial_counter] == 1:
+                   self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_triangle.config(image=self.img_triangle_preloaded)
+                   self.lbl_triangle.image = self.img_triangle_preloaded
+                elif self.TriangleDirection[self.trial_counter] == 2:
+                   self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_triangle.config(image=self.img_triangle_270_preloaded)
+                   self.lbl_triangle.image = self.img_triangle_270_preloaded
             else:
-                self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
-                self.lbl_red_triangle.config(image=self.img_red_triangle_preloaded)
-                self.lbl_red_triangle.image = self.img_red_triangle_preloaded
+                if self.TriangleDirection[self.trial_counter] == 0:
+                   self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_red_triangle.config(image=self.img_red_triangle_90_preloaded)
+                   self.lbl_red_triangle.image = self.img_red_triangle_90_preloaded
+                elif self.TriangleDirection[self.trial_counter] == 1:
+                   self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_red_triangle.config(image=self.img_red_triangle_preloaded)
+                   self.lbl_red_triangle.image = self.img_red_triangle_preloaded
+                elif self.TriangleDirection[self.trial_counter] == 2:
+                   self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
+                   self.lbl_red_triangle.config(image=self.img_red_triangle_270_preloaded)
+                   self.lbl_red_triangle.image = self.img_red_triangle_270_preloaded
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000): 
             self.lbl_triangle.place_forget()
             self.lbl_red_triangle.place_forget()
@@ -417,6 +438,7 @@ class StartWindow:
         target_pos_key = [0, 1, 2] # left, center, right respectively 
         target_pos_probabilities = [0.45, 0.10, 0.45]
         target_pos = np.random.choice(target_pos_key, self.NumTrials, p=target_pos_probabilities)
+
         # 2) Mouse appears frequency
         mouse_appear_key = [0, 1]
         mouse_probabilities = [1-(self.MouseAppearFreq/100), self.MouseAppearFreq/100]
@@ -425,13 +447,26 @@ class StartWindow:
         trigger_pos = np.random.choice(self.TriggerPosVal, self.NumTrials)
         # 4) Triangle - Target delay 
         triangle_target_interval = np.random.choice(self.TriangleTargetIntervalVal, self.NumTrials)
-        # zip function to group the ith elements together
-        transposed_data = zip(target_pos, mouse_appears, trigger_pos, triangle_target_interval)
+        # 5) Direction Triangle 
+        if self.DirectionTriangles:
+            # with proba of freq_false_directions randomly change the position to a false value 
+            direction_triangles = target_pos
+            p = self.FreqFalseDirections/100
+            for i in range(len(direction_triangles)):
+                if random.random() < p:
+                    if direction_triangles[i] == 0:
+                        direction_triangles[i] = random.choice([1, 2])
+                    elif direction_triangles[i] == 1:
+                        direction_triangles[i] = random.choice([0, 2])
+                    else: 
+                        direction_triangles[i] = random.choice([0, 1])  
+            transposed_data = zip(target_pos, mouse_appears, trigger_pos, triangle_target_interval, direction_triangles)
+        else:
+           transposed_data = zip(target_pos, mouse_appears, trigger_pos, triangle_target_interval)
         with open(FilePath, 'w', newline='') as file:
             writer = csv.writer(file)
             # Write each group of values as a row in the CSV file
             writer.writerows(transposed_data)
-
 
     def write_absolute_positions(self):
         # Saving absolute positions of important landmarks under current configurations
