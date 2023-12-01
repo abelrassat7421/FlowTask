@@ -16,8 +16,8 @@ class SettingsWindow:
     def __init__(self, master, json_file): 
         self.settings_window = tk.Toplevel(master)
         self.settings_window.title('Settings')
-        #self.settings_window.focus_set() # Window Implemetation
-        #self.settings_window.attributes('-fullscreen', True)
+        self.settings_window.focus_set() # Window Implemetation
+        self.settings_window.attributes('-fullscreen', True)
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
 
         # Creating Config path for manual configuration of certain parameters
@@ -415,8 +415,8 @@ class SettingsWindow:
                widget.destroy() 
 
     def open_config(self):
-        subprocess.run(["open", self.ConfigFilePath])
-        #os.startfile(self.ConfigFilePath) # Windows Implementation
+        #subprocess.run(["open", self.ConfigFilePath])
+        os.startfile(self.ConfigFilePath) # Windows Implementation
 
     def save_settings(self):        
         val_num_questions = self.clk_num_quest.get()

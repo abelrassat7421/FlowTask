@@ -19,16 +19,15 @@ from Questions import *
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-"""
 class RECT(ctypes.Structure):
     _fields_ = [("left", ctypes.c_long),
                 ("top", ctypes.c_long),
                 ("right", ctypes.c_long),
                 ("bottom", ctypes.c_long)]
-"""             
+                
 # Windows implementation 
 # Load user32.dll for blocking mouse
-#user32 = ctypes.windll.user32
+user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -210,7 +209,7 @@ class StartWindow:
             self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, x, y))
         
     def save_trajectory_info(self, coordinates, img):
-        num = str(self.trial_counter + 1).zfill(2)
+        num = str(self.trial_counter + 1).zfill(3)
         traj_file_name = f"mouse_trajectory_{num}.png"
         dir_path = os.path.dirname(os.path.abspath(__file__))
         dir_output = "Output"
@@ -219,9 +218,8 @@ class StartWindow:
         TrajFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name)
         traj_coord_file_name = f"mouse_trajectory_coord_{num}.csv"
         TrajCoordFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_coord_file_name)
-        
         with open(TrajCoordFilePath, 'w', newline='') as file:
-            writer = csv.writer(file)
+            writer = csv.writer(file, delimiter = ";")
             writer.writerow(['X', 'Y']) 
             writer.writerows(coordinates)  
         img.save(TrajFilePath)
@@ -279,7 +277,7 @@ class StartWindow:
 
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
         self.root.config(cursor="")
-        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):
@@ -356,7 +354,7 @@ class StartWindow:
             self.root.wait_window(questions_window.window)  # blocks until questions_window is closed
         self.seconds_elapsed = 0
         self.time_in_target = 0
-        if self.recording == True: 
+        if self.recording == True:
             self.recording = False
             self.save_trajectory_info(self.coordinates, self.img)
         self.trial_counter += 1
@@ -415,12 +413,12 @@ class StartWindow:
             self.lbl_triangle.place_forget()
             self.lbl_red_triangle.place_forget()
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
-            # unlock_cursor() # Windows Implementation
+            unlock_cursor()
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
             if self.Inverted: 
                # TODO add path to sakasa.exe
-               subprocess.Popen(["C\\path\\to\\sakasa.exe"])
+               subprocess.Popen("C:\\Users\\Lucien\\Desktop\\Mouse\\sakasa.exe", shell=True)
             if not self.MouseAppears[self.trial_counter]:
                self.root.config(cursor="none")
             self.show_target_based_on_pos()
@@ -502,8 +500,7 @@ class StartWindow:
             file.write(abs_target_boundaries + '\n')
             file.write(abs_starting_point + '\n')
 
-# Windows Implementation
-"""
+
 def lock_cursor_to_rect(x, y, width, height):
     rect = RECT(x, y, x + width, y + height)
     user32.ClipCursor(ctypes.byref(rect))
@@ -511,4 +508,4 @@ def lock_cursor_to_rect(x, y, width, height):
 def unlock_cursor():
     user32.ClipCursor(None)
 
-"""
+    
