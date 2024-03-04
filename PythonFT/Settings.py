@@ -18,7 +18,7 @@ class SettingsWindow:
         self.settings_window = tk.Toplevel(master)
         self.settings_window.title('Settings')
         #self.settings_window.focus_set() # Windows Implemetation
-        self.settings_window.attributes('-fullscreen', True)
+        # self.settings_window.attributes('-fullscreen', True)
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
 
         # Creating Config path for manual configuration of certain parameters
