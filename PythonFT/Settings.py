@@ -5,6 +5,7 @@ import os
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
+pyautogui.FAILSAFE = False
 import time
 import numpy as np
 import subprocess
@@ -16,7 +17,7 @@ class SettingsWindow:
     def __init__(self, master, json_file): 
         self.settings_window = tk.Toplevel(master)
         self.settings_window.title('Settings')
-        self.settings_window.focus_set() # Window Implemetation
+        #self.settings_window.focus_set() # Windows Implemetation
         self.settings_window.attributes('-fullscreen', True)
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
 
@@ -415,8 +416,8 @@ class SettingsWindow:
                widget.destroy() 
 
     def open_config(self):
-        #subprocess.run(["open", self.ConfigFilePath])
-        os.startfile(self.ConfigFilePath) # Windows Implementation
+        subprocess.run(["open", self.ConfigFilePath])
+        #os.startfile(self.ConfigFilePath) # Windows Implementation
 
     def save_settings(self):        
         val_num_questions = self.clk_num_quest.get()
@@ -441,7 +442,7 @@ class SettingsWindow:
         if not val_configure_with_csv:
             val_mouse_appear_freq = self.auto_config_param["mouse_appear_freq"].get()
             val_num_triggers = self.auto_config_param["num_triggers"].get()
-            val_triggers = [float(entry.get()) for entry in self.auto_config_param["trigger_values"]]
+            val_triggers = [int(entry.get()) for entry in self.auto_config_param["trigger_values"]]
             val_num_triangle_target_interval = self.auto_config_param["num_triangle_target_interval"].get()
             val_time_intervals = [int(entry.get()) for entry in self.auto_config_param["time_intervals"]]
             val_freq_false_directions = self.auto_config_param["freq_false_directions"].get()

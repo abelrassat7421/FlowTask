@@ -45,7 +45,7 @@ class Config:
             for row in reader:
                 self.target_pos.append(int(row[0]))
                 self.mouse_appears.append(int(row[1]))
-                self.trigger_pos.append(float(row[2]))
+                self.trigger_pos.append(int(row[2]))
                 self.triangle_target_interval.append(int(row[3]))
                 if self.direction_triangles:
                    self.triangle_direction.append(int(row[4]))

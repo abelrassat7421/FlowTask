@@ -5,6 +5,7 @@ import os
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
+pyautogui.FAILSAFE = False
 import time
 import numpy as np
 

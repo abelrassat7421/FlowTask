@@ -5,14 +5,16 @@ import os
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
+pyautogui.FAILSAFE = False
 import time
 import numpy as np
+from LptPort import LptPort 
 
 from Config import *
 
 class QuestionsWindow: 
     def __init__(self, master, trial_num, timing, quest_type, start_time):
-        # here we assume that there exists at least one question with the given timing (checked for in Start.py)
+        # at least one question with the given timing exists (checked for in Start.py)
         self.root = master
         self.trial_num = trial_num
         self.window = tk.Toplevel(master)
@@ -29,7 +31,7 @@ class QuestionsWindow:
         self.quest_answers = []
         self.start_time = start_time
             
-        # The answers to the quesitons will be saved in a txt file with format
+        # The answers to the questions will be saved in a txt file with format
         # pre_trial_questions_{nn} or post_trial_questions_{nn}
         self.frm_questions = ttk.Frame(self.window, borderwidth=2, relief="ridge")
         self.frm_questions.pack(expand=True, anchor='center')
@@ -46,6 +48,11 @@ class QuestionsWindow:
         for mouse_event in ["<Button-1>", "<Button-2>", "<Button-3>", "<Double-Button-1>", "<B1-Motion>", "<Enter>", "<Leave>", "<MouseWheel>"]:
             self.window.bind(mouse_event, self.disable_mouse)
 
+        try:
+            self.lptPort = LptPort(0x0378)   # Idea: should add the '0x0378' and other std LPT adresses in settings pannel
+        except:
+            print("WARNING: LPT port NOT opened!")
+
         # go through all questions with the given timing
         self.pass_through_questions(self.Questions[self.question_tracker])
 
@@ -59,10 +66,22 @@ class QuestionsWindow:
 
         self.lbl_guidelines = tk.Label(master=self.frm_questions, text=f"(Select a number between 1 and {quest['answer_range']} on your keyboard)", font=("Arial", 12, "italic"))
         self.lbl_guidelines.grid(row=0, column=2 , padx=20, sticky='w')
+        if self.timing == "pre":
+            self.lptPort.sendEvent(self.question_tracker*10)
+        if self.timing == "post":
+            self.lptPort.sendEvent(self.question_tracker*10 + 100)
+
         self.wait_move_to_next_question()
+
             
     def wait_move_to_next_question(self):
         if self.valid_key_pressed == True:
+            answer = self.quest_answers[-1]
+            event_num = (self.question_tracker)*10 + answer
+            if self.timing == "pre":
+               self.lptPort.sendEvent(event_num)
+            if self.timing == "post":
+               self.lptPort.sendEvent(event_num+100)
             self.clear_window_for_next_questions(self.timing)
             if self.question_tracker < self.num_questions:
                self.pass_through_questions(self.Questions[self.question_tracker])
