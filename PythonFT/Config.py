@@ -10,6 +10,8 @@ class Config:
             
             self.root = master
             self.num_questions = data["num_questions"]
+            self.task_instructions = data["task_instructions"]
+            self.task_instructions_duration = data["task_instructions_duration"]
             self.questions = data["questions"]
             self.inverted = data["inverted"]
             self.trigger_visible = data["trigger_visible"]
@@ -30,6 +32,7 @@ class Config:
             self.triangle_time = data["triangle_time"]
             self.num_random_trial = data["num_random_trial"]            
             self.target_size = data["target_size"]
+            self.display_timer = data["display_timer"]
 
     def read_config(self, gen_config_file): 
         # Lists to hold the data

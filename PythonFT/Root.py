@@ -43,12 +43,16 @@ class MainWindow(tk.Tk):
         triangle_rot_270 = "triangle_rot_270.png"
         red_triangle_rot_90 = "red_triangle_rot_90.png"
         red_triangle_rot_270 = "red_triangle_rot_270.png"
+        #spring_colorbar = "spring_colorbar.jpeg"
+        #winter_colorbar = "winter_colorbar.jpeg"
         self.RedTriangleFilePath = os.path.join(dir_path, config_dir, Image_dir, red_triangle_file_name)
         self.TriangleFilePath = os.path.join(dir_path, config_dir, Image_dir, triangle_file_name)
         self.TriangleRot90Path = os.path.join(dir_path, config_dir, Image_dir, triangle_rot_90)
         self.TriangleRot270Path = os.path.join(dir_path, config_dir, Image_dir, triangle_rot_270)
         self.RedTriangleRot90Path = os.path.join(dir_path, config_dir, Image_dir, red_triangle_rot_90)
         self.RedTriangleRot270Path = os.path.join(dir_path, config_dir, Image_dir, red_triangle_rot_270)
+        #self.SpringColorbar = os.path.join(dir_path, config_dir, Image_dir, spring_colorbar)
+        #self.WinterColorbar = os.path.join(dir_path, config_dir, Image_dir, winter_colorbar)
 
         cross_file_name = "cross.png"
         self.CrossFilePath = os.path.join(dir_path, config_dir, Image_dir, cross_file_name)

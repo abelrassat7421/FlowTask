@@ -8,7 +8,7 @@ import pyautogui
 pyautogui.FAILSAFE = False
 import time
 import numpy as np
-from LptPort import LptPort 
+#from LptPort import LptPort 
 
 from Config import *
 
@@ -19,7 +19,7 @@ class QuestionsWindow:
         self.trial_num = trial_num
         self.window = tk.Toplevel(master)
         self.window.title(f'Questions {timing}-trial')
-        #self.window.focus_set() # Window Implemetation
+        #self.window.focus_set() # Windows Implemetation
         #self.window.attributes('-fullscreen', True)
         self.config = Config(master.ConfigFilePath, self.root) 
         self.Questions = quest_type
@@ -48,7 +48,7 @@ class QuestionsWindow:
         for mouse_event in ["<Button-1>", "<Button-2>", "<Button-3>", "<Double-Button-1>", "<B1-Motion>", "<Enter>", "<Leave>", "<MouseWheel>"]:
             self.window.bind(mouse_event, self.disable_mouse)
 
-        # try: TODO(1)
+        # try: 
         #     self.lptPort = LptPort(0x0378)   # Idea: should add the '0x0378' and other std LPT adresses in settings pannel
         # except:
         #     print("WARNING: LPT port NOT opened!")

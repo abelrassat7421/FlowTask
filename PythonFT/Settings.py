@@ -44,6 +44,8 @@ class SettingsWindow:
         
         # creating labels
         lbl_num_quest = tk.Label(master=self.frm_settings, text="Number of questions:")
+        lbl_task_instructions = tk.Label(master=self.frm_settings, text="Task instructions:")
+        lbl_task_instructions_duration = tk.Label(master=self.frm_settings, text="Task instructions duration (s):")
         lbl_inverted = tk.Label(master=self.frm_settings, text="Is Inverted?:")
         lbl_trigger_visible = tk.Label(master=self.frm_settings, text="Trigger Visible?:")
         lbl_direction_triangles = tk.Label(master=self.frm_settings, text="Have triangles for direction?:") 
@@ -55,6 +57,7 @@ class SettingsWindow:
         lbl_triangle_time = tk.Label(master=self.frm_settings, text="Triangle time:") 
         lbl_num_random_trial = tk.Label(master=self.frm_settings, text="Number of Random Trials:")
         lbl_target_size = tk.Label(master=self.frm_settings, text="Target Size:")
+        lbl_display_timer = tk.Label(master=self.frm_settings, text="Display Timer?:")
 
         # creating canvas to delineate group of labels
         canvas1 = tk.Canvas(self.frm_settings, height=2, bg="white")
@@ -64,21 +67,24 @@ class SettingsWindow:
         
         # placing labels 
         lbl_num_quest.grid(row=0, column=0, pady=2, sticky='w')
-        canvas1.grid(row=2, column=0, sticky="ew", pady=(0, 0))
-        lbl_inverted.grid(row=3, column=0, pady=2, sticky='w')
-        lbl_trigger_visible.grid(row=4, column=0, pady=5, sticky='w')
-        lbl_direction_triangles.grid(row=5, column=0, pady=2, sticky='w')
-        canvas2.grid(row=6, column=0, sticky="ew", pady=(0, 0))
-        lbl_configure_with_csv.grid(row=7, column=0, pady=2, sticky='w')
-        canvas3.grid(row=9, column=0, sticky="ew", pady=(0, 0))
-        lbl_trajectory_sampling_rate.grid(row=10, column=0, pady=2, sticky='w')
-        lbl_preparation_time.grid(row=11, column=0, pady=2, sticky='w')
-        lbl_inter_trial_time.grid(row=12, column=0, pady=2, sticky='w')
-        lbl_time_to_center.grid(row=13, column=0, pady=2, sticky='w')
-        lbl_triangle_time.grid(row=14, column=0, pady=2, sticky='w')
-        lbl_num_random_trial.grid(row=15, column=0, pady=2, sticky='w')
-        lbl_target_size.grid(row=16, column=0, pady=2, sticky='w')
-        canvas4.grid(row=17, column=0, sticky="ew", pady=(0, 0))
+        lbl_task_instructions.grid(row=2, column=0, pady=2, sticky='nw')
+        lbl_task_instructions_duration.grid(row=3, column=0, pady=2, sticky='w')
+        canvas1.grid(row=4, column=0, sticky="ew", pady=(0, 0))
+        lbl_inverted.grid(row=5, column=0, pady=2, sticky='w')
+        lbl_trigger_visible.grid(row=6, column=0, pady=5, sticky='w')
+        lbl_direction_triangles.grid(row=7, column=0, pady=2, sticky='w')
+        canvas2.grid(row=8, column=0, sticky="ew", pady=(0, 0))
+        lbl_configure_with_csv.grid(row=9, column=0, pady=2, sticky='w')
+        canvas3.grid(row=11, column=0, sticky="ew", pady=(0, 0))
+        lbl_trajectory_sampling_rate.grid(row=12, column=0, pady=2, sticky='w')
+        lbl_preparation_time.grid(row=13, column=0, pady=2, sticky='w')
+        lbl_inter_trial_time.grid(row=14, column=0, pady=2, sticky='w')
+        lbl_time_to_center.grid(row=15, column=0, pady=2, sticky='w')
+        lbl_triangle_time.grid(row=16, column=0, pady=2, sticky='w')
+        lbl_num_random_trial.grid(row=17, column=0, pady=2, sticky='w')
+        lbl_target_size.grid(row=18, column=0, pady=2, sticky='w')
+        lbl_display_timer.grid(row=19, column=0, pady=2, sticky='w')
+        canvas4.grid(row=20, column=0, sticky="ew", pady=(0, 0))
         
         # drawing the lines
         canvas1.create_line(0, 1, canvas1.winfo_reqwidth(), 1, fill="black")
@@ -90,11 +96,16 @@ class SettingsWindow:
         self.optionTF = [True, False]
         self.option_timing = ["pre", "post"]
         self.clk_num_quest = tk.IntVar()
+        self.clk_task_instructions_duration = tk.IntVar()
         self.clk_inverted = tk.BooleanVar()
         self.clk_trigger_visible = tk.BooleanVar()
         self.clk_direction_triangles = tk.BooleanVar()
         self.clk_configure_with_csv = tk.BooleanVar()
-        
+        self.clk_display_timer = tk.BooleanVar()
+
+        # Create a Text widget for instructions
+        self.txt_task_instruction = tk.Text(self.frm_settings, width=60, height=15)
+
         # creating entry boxes
         self.ent_trajectory_sampling_rate = ttk.Entry(self.frm_settings)
         self.ent_preparation_time = ttk.Entry(self.frm_settings)
@@ -109,6 +120,8 @@ class SettingsWindow:
             data = json.load(file)
             
             self.clk_num_quest.set(data["num_questions"])
+            self.clk_task_instructions_duration.set(data["task_instructions_duration"])
+            self.txt_task_instruction.insert(tk.END, data["task_instructions"])
             self.clk_inverted.set(data["inverted"])
             self.clk_trigger_visible.set(data["trigger_visible"])
             self.clk_direction_triangles.set(data["direction_triangles"])
@@ -120,27 +133,33 @@ class SettingsWindow:
             self.ent_triangle_time.insert(0, data["triangle_time"])
             self.ent_num_random_trial.insert(0, data["num_random_trial"])
             self.ent_target_size.insert(0, data["target_size"])
+            self.clk_display_timer.set(data["display_timer"])
 
         # creating option menus 
         drp_num_quest = ttk.OptionMenu(self.frm_settings, self.clk_num_quest, self.clk_num_quest.get(), *range(0, 11), command=self.update_questions)
+        drp_task_instructions_duration = ttk.OptionMenu(self.frm_settings, self.clk_task_instructions_duration, self.clk_task_instructions_duration.get(), *range(0, 11))
         drp_inverted = ttk.OptionMenu(self.frm_settings, self.clk_inverted, self.clk_inverted.get(), *self.optionTF) 
         drp_trigger_visible = ttk.OptionMenu(self.frm_settings, self.clk_trigger_visible, self.clk_trigger_visible.get(), *self.optionTF)
         drp_direction_triangles = ttk.OptionMenu(self.frm_settings, self.clk_direction_triangles, self.clk_direction_triangles.get(), *self.optionTF, command=self.update_triangle_direction_param)
         drp_configure_with_csv = ttk.OptionMenu(self.frm_settings, self.clk_configure_with_csv, self.clk_configure_with_csv.get(), *self.optionTF, command=self.update_csv_config_options)
+        drp_display_timer = ttk.OptionMenu(self.frm_settings, self.clk_display_timer, self.clk_display_timer.get(), *self.optionTF)
 
         # placing option menus and entry boxes
         drp_num_quest.grid(row=0, column=1, pady=2, padx=10, sticky='w')
-        drp_inverted.grid(row=3, column=1, pady=2, padx=10, sticky='w')
-        drp_trigger_visible.grid(row=4, column=1, pady=2, padx=10, sticky='w')
-        drp_direction_triangles.grid(row=5, column=1, pady=2, padx=10,  sticky='w')
-        drp_configure_with_csv.grid(row=7, column=1, pady=2, padx=10, sticky='w')
-        self.ent_trajectory_sampling_rate.grid(row=10, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_preparation_time.grid(row=11, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_inter_trial_time.grid(row=12, column=1, pady=2, padx=10,  sticky='w')
-        self.ent_time_to_center.grid(row=13, column=1, pady=2, padx=10, sticky='w')
-        self.ent_triangle_time.grid(row=14, column=1, pady=2, padx=10, sticky='w')
-        self.ent_num_random_trial.grid(row=15, column=1, pady=2, padx=10, sticky='w')
-        self.ent_target_size.grid(row=16, column=1, pady=2, padx=10, sticky='w')
+        self.txt_task_instruction.grid(row=2, column=1, pady=2, padx=10, sticky='w')
+        drp_task_instructions_duration.grid(row=3, column=1, pady=2, padx=10, sticky='w')
+        drp_inverted.grid(row=5, column=1, pady=2, padx=10, sticky='w')
+        drp_trigger_visible.grid(row=6, column=1, pady=2, padx=10, sticky='w')
+        drp_direction_triangles.grid(row=7, column=1, pady=2, padx=10,  sticky='w')
+        drp_configure_with_csv.grid(row=10, column=1, pady=2, padx=10, sticky='w')
+        self.ent_trajectory_sampling_rate.grid(row=12, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_preparation_time.grid(row=13, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_inter_trial_time.grid(row=14, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_time_to_center.grid(row=15, column=1, pady=2, padx=10, sticky='w')
+        self.ent_triangle_time.grid(row=16, column=1, pady=2, padx=10, sticky='w')
+        self.ent_num_random_trial.grid(row=17, column=1, pady=2, padx=10, sticky='w')
+        self.ent_target_size.grid(row=18, column=1, pady=2, padx=10, sticky='w')
+        drp_display_timer.grid(row=19, column=1, pady=2, padx=10, sticky='w')
 
         # Create a frame to hold the Entry widgets and Option Menus that depend on other Option Menus 
         # i.e., second order widgets
@@ -156,7 +175,7 @@ class SettingsWindow:
             "freq_false_directions": 0,
             }
         self.frame_questions.grid(row=1, column=0, columnspan=3, pady=2, padx=10,  sticky='w')
-        self.frame_not_config_with_csv.grid(row=8, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
+        self.frame_not_config_with_csv.grid(row=9, column=0, columnspan=2, pady=2, padx=10,  sticky='w')
         
         # Adding default values from json for second order widgets 
         with open(json_file, 'r') as file:
@@ -259,16 +278,16 @@ class SettingsWindow:
                 drp_answer_range.grid(row=4*i + i+3, column=2, pady=2, padx=10, sticky='w')
 
         btn_open_config = ttk.Button(self.frm_settings, text="Open config file", command=self.open_config)
-        btn_open_config.grid(row=18, column=0, pady=10, padx=20, sticky='w')
+        btn_open_config.grid(row=21, column=0, pady=10, padx=20, sticky='w')
 
         btn_save = ttk.Button(self.frm_settings, text="Save", command=self.save_settings)
-        btn_save.grid(row=19, column=0, pady=2, padx=20, sticky='w')
+        btn_save.grid(row=22, column=0, pady=2, padx=20, sticky='w')
 
         btn_close = ttk.Button(self.frm_settings, text="Close", command=self.close_settings_window)
-        btn_close.grid(row=20, column=0, pady=2, padx=20, sticky='w')
+        btn_close.grid(row=23, column=0, pady=2, padx=20, sticky='w')
 
         lbl_remark = tk.Label(master=self.frm_settings, text="NB: Pour référence, la croix de départ se situe à 5% de la hauteur de l'écran et tous les temps sont en (ms).", font=("Arial", 12, "italic"))
-        lbl_remark.grid(row=21, column=0, pady=10, padx=20, sticky='w')
+        lbl_remark.grid(row=24, column=0, pady=10, padx=20, sticky='w')
 
     def on_configure(self, event):
         # Set the scroll region after UI has been configured
@@ -435,6 +454,8 @@ class SettingsWindow:
                 "formulation": str(quest["formulation"]),
                 "answer_range": int(quest["answer_range"])
             })
+        val_task_instructions = self.txt_task_instruction.get("1.0", "end-1c")
+        val_task_instructions_duration = self.clk_task_instructions_duration.get()
         val_inverted = self.clk_inverted.get()
         val_trigger_visible = self.clk_trigger_visible.get()
         val_direction_triangles = self.clk_direction_triangles.get()
@@ -453,6 +474,7 @@ class SettingsWindow:
         val_triangle_time = self.ent_triangle_time.get()
         val_num_random_trial = self.ent_num_random_trial.get()
         val_target_size = self.ent_target_size.get()
+        val_display_timer = self.clk_display_timer.get()
 
         # Read the existing JSON data
         dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -464,6 +486,8 @@ class SettingsWindow:
 
         # Update the values
         data["num_questions"] = val_num_questions
+        data["task_instructions"] = val_task_instructions
+        data["task_instructions_duration"] = val_task_instructions_duration
         data["questions"] = val_questions
         data["inverted"] = val_inverted
         data["trigger_visible"] = val_trigger_visible
@@ -483,6 +507,7 @@ class SettingsWindow:
         data["triangle_time"] = int(val_triangle_time)
         data["num_random_trial"] = int(val_num_random_trial)
         data["target_size"] = int(val_target_size)
+        data["display_timer"] = val_display_timer
 
         # Write the updated data back to the JSON file
         with open(FilePath, 'w') as file:
