@@ -19,7 +19,7 @@ class QuestionsWindow:
         self.trial_num = trial_num
         self.window = tk.Toplevel(master)
         self.window.title(f'Questions {timing}-trial')
-        #self.window.focus_set() # Windows Implemetation
+        self.window.focus_set() # Windows Implemetation
         #self.window.attributes('-fullscreen', True)
         self.config = Config(master.ConfigFilePath, self.root) 
         self.Questions = quest_type

@@ -16,7 +16,7 @@ import datetime
 import colorsys
 import time
 
-# import ctypes # Windows implementation
+import ctypes # Windows implementation
 import subprocess
 
 from Config import *
@@ -25,15 +25,15 @@ from Questions import *
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-# class RECT(ctypes.Structure):
-#     _fields_ = [("left", ctypes.c_long),
-#                 ("top", ctypes.c_long),
-#                 ("right", ctypes.c_long),
-#                 ("bottom", ctypes.c_long)]
+class RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long),
+                ("top", ctypes.c_long),
+                ("right", ctypes.c_long),
+                ("bottom", ctypes.c_long)]
                 
 # Windows implementation 
 # Load user32.dll for blocking mouse
-# user32 = ctypes.windll.user32
+user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -413,7 +413,7 @@ class StartWindow:
 
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
         self.root.config(cursor="")
-        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):
@@ -602,7 +602,7 @@ class StartWindow:
             # else:
             #     self.lptPort.sendEvent(215)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
-            # unlock_cursor() # Windows implemetation
+            unlock_cursor() # Windows implemetation
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
             #self.lptPort.sendEvent(100)
@@ -689,13 +689,12 @@ class StartWindow:
             file.write(abs_target_boundaries + '\n')
             file.write(abs_starting_point + '\n')
 
-
 # Windows implementation 
-# def lock_cursor_to_rect(x, y, width, height):
-#     rect = RECT(x, y, x + width, y + height)
-#     user32.ClipCursor(ctypes.byref(rect))
+def lock_cursor_to_rect(x, y, width, height):
+    rect = RECT(x, y, x + width, y + height)
+    user32.ClipCursor(ctypes.byref(rect))
 
-# def unlock_cursor():
-#     user32.ClipCursor(None)
+def unlock_cursor():
+    user32.ClipCursor(None)
 
     
