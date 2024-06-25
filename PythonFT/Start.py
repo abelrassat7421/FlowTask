@@ -6,28 +6,34 @@ import shutil
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
+pyautogui.FAILSAFE = False
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import random
 import sys
 import datetime
+import colorsys
+import time
 
-import ctypes # Windows implementation
+#import ctypes # Windows implementation
 import subprocess
 
 from Config import *
 from Questions import *
+#from LptPort import LptPort   # Added by MP to sync with EEG amplifiers 
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-class RECT(ctypes.Structure):
-    _fields_ = [("left", ctypes.c_long),
-                ("top", ctypes.c_long),
-                ("right", ctypes.c_long),
-                ("bottom", ctypes.c_long)]
+# class RECT(ctypes.Structure):
+#     _fields_ = [("left", ctypes.c_long),
+#                 ("top", ctypes.c_long),
+#                 ("right", ctypes.c_long),
+#                 ("bottom", ctypes.c_long)]
                 
 # Windows implementation 
 # Load user32.dll for blocking mouse
-user32 = ctypes.windll.user32
+#user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -37,6 +43,11 @@ class StartWindow:
         self.screen_width = self.root.screen_width
         self.screen_height = self.root.screen_height
         self.config = Config(self.root.ConfigFilePath, self.root) 
+        # try: 
+        #     self.lptPort = LptPort(0x0378)# Idea: should add the '0x0378' and other std LPT adresses in settings pannel
+        # except:
+        #     print("WARNING: LPT port NOT opened!") 
+        # self.lptPort.sendEvent(0)  
 
         self.target_set = False
         self.target_center_reached = False 
@@ -50,16 +61,22 @@ class StartWindow:
         self.not_in_trial = True
         self.after_wait_enter_target = False
         self.after_wait_end_trial = False
+        self.mouse_has_moved = False
+        self.center_target_reached = False
         now = datetime.datetime.now()
         self.start_time = now.strftime('%Y_%m_%d_%H_%M_%S')
         self.decx = 0 # offsets from window decorations 
         self.decy = 0 
+        self.refresh_rate = 100 # in ms 
         
         self.Questions = self.config.questions 
+        self.TaskInstructions = self.config.task_instructions
+        self.TaskInstructionsDuration = self.config.task_instructions_duration
         self.Inverted = self.config.inverted # this may be converted into a list 
         self.TriggerVisible = self.config.trigger_visible 
         self.DirectionTriangles = self.config.direction_triangles
         self.ConfigWithCSV = self.config.configure_with_csv 
+        self.DisplayTimer = self.config.display_timer 
         if not self.ConfigWithCSV: 
             self.MouseAppearFreq = self.config.mouse_appear_freq
             self.TriggerPosVal = self.config.trigger_values 
@@ -97,12 +114,15 @@ class StartWindow:
         image_tri_270 = Image.open(self.root.TriangleRot270Path)
         image_red_tri_90 = Image.open(self.root.RedTriangleRot90Path)
         image_red_tri_270 = Image.open(self.root.RedTriangleRot270Path)
+        #self.image_spring_colorbar = Image.open(self.root.SpringColorbar)
+        #self.image_winter_colorbar = Image.open(self.root.WinterColorbar)
         image_cross = Image.open(self.root.CrossFilePath).convert("RGBA")
         self.image_tar_resized = self.image_tar.resize((self.TargetSize, self.TargetSize))
         image_tri_resized = image_tri.resize((TriangleSize, TriangleSize))
         image_red_tri_resized = image_red_tri.resize((TriangleSize, TriangleSize))
         image_tri_90_resized = image_tri_90.resize((TriangleSize, TriangleSize))
         image_tri_270_resized = image_tri_270.resize((TriangleSize, TriangleSize))
+        
         image_red_tri_90_resized = image_red_tri_90.resize((TriangleSize, TriangleSize))
         image_red_tri_270_resized = image_red_tri_270.resize((TriangleSize, TriangleSize))
         self.image_cross_resized = image_cross.resize((self.CrossSize, self.CrossSize))
@@ -139,33 +159,73 @@ class StartWindow:
         # Copy of configuration in current output directory
         dir_path = os.path.dirname(os.path.abspath(__file__))
         json_config_file_name = "config.json"
+        events_description_file_name = "events_description.md"
         dir_output = "Output"
         dir_current_output = f"Output_{self.start_time}"
         NewOuputPath = os.path.join(dir_path, dir_output, dir_current_output)
         os.makedirs(NewOuputPath)
         dir_trajectories = "Trajectories"
         dir_answers = "Answers"
-        NewDirTraject = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories)
+        self.NewDirTraject = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories)
         NewDirAnswers = os.path.join(dir_path, dir_output, dir_current_output, dir_answers)
-        os.makedirs(NewDirTraject)
+        os.makedirs(self.NewDirTraject)
         os.makedirs(NewDirAnswers)
+        EventsDescription = os.path.join(self.root.ConfigDirPath, events_description_file_name)
         CopyConfigByTrialFilePath = os.path.join(dir_path, dir_output, dir_current_output, self.trial_by_trial_config_file_name)
         CopyJsonFilePath = os.path.join(dir_path, dir_output, dir_current_output, json_config_file_name)
+        CopyEventsDescription = os.path.join(dir_path, dir_output, dir_current_output, events_description_file_name)
         shutil.copy(self.ConfigFileCSVPath, CopyConfigByTrialFilePath)
         shutil.copy(self.root.ConfigFilePath, CopyJsonFilePath)
+        shutil.copy(EventsDescription, CopyEventsDescription)
 
         # Bind space bar to move to the following trial
         self.root.bind("<space>", self.on_space_press)
         # Return to application menu
         self.root.bind("<Return>", self.on_enter_key)
         
-        '''
         # Create a label for the timer
-        self.lbl_timer = tk.Label(master=self.canvas, text="0")
-        self.lbl_timer.place(relx=0.95, rely=0.95, anchor='se') 
-        '''
+        if self.DisplayTimer: 
+            self.lbl_timer = tk.Label(master=self.canvas, text="0")
+            self.lbl_timer.place(relx=0.95, rely=0.95, anchor='sw') 
+
+        # TODO Choose a colormap for aggregate trajectories (one color per trial)
+        colormap_name = 'jet' #'spring'  # other sequential colormaps are the other season names or 'cool'
+        # give the link for all colormapsof the matplotlib colormaps
+        cmap = plt.get_cmap(colormap_name)
+        num_intervals = self.NumTrials
+        intervals = np.linspace(0, 1, num_intervals)
+        colors = [cmap(interval) for interval in intervals]
+        self.hex_colors_trial = [mcolors.to_hex(color) for color in colors]
+
+        # TODO Choose a colormap for aggregate trajectories (color change according to velocity)
+        colormap_name = 'winter' # # other sequential colormaps are the other season names or 'cool'
+        # reverse the colormap to have the lowest velocity in green
+        self.cmap_velocity = plt.get_cmap(colormap_name).reversed()
+        scaling_factor = 0.1 # choose appropriate scaling factor for maximum velocity TODO
+        self.max_velocity = np.sqrt(self.screen_width**2 + self.screen_height**2)/self.TrajSamplingRate * scaling_factor # assuming it's the diagonal of the screen traversed at the recording rate
+
+        self.open_instructions_window(instructions=self.TaskInstructions, duration=self.TaskInstructionsDuration)
+        #time.sleep(self.TaskInstructionsDuration)
+        self.root.wait_window(instructions_window)  
 
         self.global_update()
+        
+    def open_instructions_window(self, instructions, duration):
+        global instructions_window
+        instructions_window = tk.Toplevel(self.root)
+        instructions_window.title("Task Instructions")
+        self.instructions_canvas = tk.Canvas(instructions_window, width=self.screen_width, height=self.screen_height, bg=self.root.cget('bg'))
+        self.instructions_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        self.lbl_task_instructions = tk.Label(self.instructions_canvas, text="Task Instructions",
+        font=("Arial", 24), bg="blue",  fg="white", width=self.instructions_canvas.winfo_screenwidth(), height=3)
+        self.lbl_task_instructions.pack(anchor="n", fill="x")
+        label = tk.Label(self.instructions_canvas, text=instructions, font=("Arial", 20), wraplength=1000)
+        label.pack(anchor="center", pady=200)
+        instructions_window.after(duration * 1000, self.close_instructions_window)
+        
+    def close_instructions_window(self):
+        instructions_window.destroy() 
 
     def new_trial(self):
         if self.trial_counter > 0:
@@ -174,15 +234,66 @@ class StartWindow:
         self.target_center_reached = False
         self.get_ready = True 
         self.trigger_set = False
+        self.mouse_has_moved = False
+        self.center_target_reached = False
+        #self.lptPort.sendEvent(2)
 
+# Methods for drawing and recording mouse trajectory
     def draw_line(self, event=None):
         self.trigger_line = self.canvas.create_line(0, self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], self.canvas.winfo_width(), self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], fill="black", dash=(10))
 
     def capture_trajectory(self, sampling_rate=100): 
         self.coordinates = []
         self.root.update_idletasks()
+        
+        # 1) New image for new trajectory 
         self.img = Image.new("RGB", (self.screen_width, self.screen_height), "white")
         draw = ImageDraw.Draw(self.img)
+        
+        # 2) Superimposing new trajectory over image with previous trajectories from the trial
+        if self.trial_counter > 0: 
+            dir_path = os.path.dirname(os.path.abspath(__file__))
+            dir_output = "Output"
+            dir_current_output = f"Output_{self.start_time}"
+            dir_trajectories = "Trajectories"
+            num = str(self.trial_counter).zfill(3)
+            traj_file_name_trial_agg = f"mouse_trajectory_trial_agg_{num}.png"
+            traj_file_name_velocity_agg = f"mouse_trajectory_velocity_agg_{num}.png"
+            TrajFilePathTrialAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_trial_agg)
+            TrajFilePathVelocityAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_velocity_agg)
+
+            agg_trial_image_path = os.path.join(TrajFilePathTrialAgg)
+            agg_velocity_image_path = os.path.join(TrajFilePathVelocityAgg)
+            self.agg_trial_image = Image.open(agg_trial_image_path)
+            self.agg_velocity_image = Image.open(agg_velocity_image_path)
+            agg_trial_draw = ImageDraw.Draw(self.agg_trial_image)
+            agg_velocity_draw = ImageDraw.Draw(self.agg_velocity_image)
+            # Create a new blank image for drawing
+        elif self.trial_counter == 0:
+            self.agg_trial_image = Image.new("RGB", (self.screen_width, self.screen_height), "white")
+            self.agg_velocity_image = Image.new("RGB", (self.screen_width, self.screen_height), "white")
+            agg_trial_draw = ImageDraw.Draw(self.agg_trial_image)
+            agg_velocity_draw = ImageDraw.Draw(self.agg_velocity_image)
+            _, _, _, a = self.image_tar_resized.split()
+            self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.15 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            _, _, _, a = self.image_cross_resized.split()
+            self.agg_trial_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
+
+            _, _, _, a = self.image_tar_resized.split()
+            self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.15 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
+            _, _, _, a = self.image_cross_resized.split()
+            self.agg_velocity_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
+
+            # Paste the colorbar image onto the original PIL Image object
+            # Perhaps remove TODO 
+            #offset = 0  # adjust the offset as needed - may need to adjust based on screen dimensions TODO
+            #self.agg_trial_image.paste(self.image_spring_colorbar, (offset, 0))
+            #self.agg_velocity_image.paste(self.image_winter_colorbar, (offset, 0))
+        
         _, _, _, a = self.image_tar_resized.split()
         self.img.paste(self.image_tar_resized, (round(self.lbl_target.winfo_rootx()), round(self.lbl_target.winfo_rooty())), mask=a)
         _, _, _, a = self.image_cross_resized.split()
@@ -195,34 +306,60 @@ class StartWindow:
         self.coordinates.append((prev_x, prev_y))
 
         self.recording = True
-        self.record_and_draw_last_traj_pt(draw, prev_x, prev_y)
+        self.record_and_draw_last_traj_pt(draw, prev_x, prev_y, type="new")
+        self.record_and_draw_last_traj_pt(agg_trial_draw, prev_x, prev_y, type="agg_trial")
+        self.record_and_draw_last_traj_pt(agg_velocity_draw, prev_x, prev_y, type="agg_velocity")
 
-    def record_and_draw_last_traj_pt(self, draw, prev_x, prev_y):
+    def record_and_draw_last_traj_pt(self, draw, prev_x, prev_y, type):
         if self.recording == True:
             x, y = pyautogui.position()
             self.coordinates.append((x, y))
             # Draw a line from the previous position to the current position
-            draw.line([(prev_x, prev_y), (x, y)], fill="black", width=2)
+            if type == "new":
+               draw.line([(prev_x, prev_y), (x, y)], fill="black", width=2)
+            if type == "agg_trial": 
+               draw.line([(prev_x, prev_y), (x, y)], fill=self.hex_colors_trial[self.trial_counter], width=2) 
+            if type == "agg_velocity":
+                color_num = np.log(self.mouse_velocity(prev_x, prev_y, x, y) + 1)/np.log(self.max_velocity + 1)
+                #print(f"Debug velocities: {self.mouse_velocity(prev_x, prev_y, x, y), self.max_velocity, np.log(self.mouse_velocity(prev_x, prev_y, x, y)), np.log(self.max_velocity), np.log(self.mouse_velocity(prev_x, prev_y, x, y) + 1), np.log(self.max_velocity*0.1 + 1)}")
+                color = self.cmap_velocity(color_num) 
+                draw.line([(prev_x, prev_y), (x, y)], fill=mcolors.to_hex(color) , width=2)
             if self.target_center_reached == True: 
                 self.recording = False
-                self.save_trajectory_info(self.coordinates, self.img)
-            self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, x, y))
-        
-    def save_trajectory_info(self, coordinates, img):
-        num = str(self.trial_counter + 1).zfill(3)
-        traj_file_name = f"mouse_trajectory_{num}.png"
+                self.save_trajectory_info(self.coordinates, self.img, "new")
+                self.save_trajectory_info(self.coordinates, self.agg_trial_image, "agg_trial")
+                self.save_trajectory_info(self.coordinates, self.agg_velocity_image, "agg_velocity")
+            self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, x, y, type))
+            
+    def mouse_velocity(self, prev_x, prev_y, x, y):
+        return np.sqrt((prev_x - x)**2 + (prev_y - y)**2)/self.TrajSamplingRate
+               
+    def save_trajectory_info(self, coordinates, img, type):
         dir_path = os.path.dirname(os.path.abspath(__file__))
         dir_output = "Output"
         dir_current_output = f"Output_{self.start_time}"
         dir_trajectories = "Trajectories"
-        TrajFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name)
-        traj_coord_file_name = f"mouse_trajectory_coord_{num}.csv"
-        TrajCoordFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_coord_file_name)
-        with open(TrajCoordFilePath, 'w', newline='') as file:
-            writer = csv.writer(file, delimiter = ";")
-            writer.writerow(['X', 'Y']) 
-            writer.writerows(coordinates)  
-        img.save(TrajFilePath)
+        if type == "new":
+            num = str(self.trial_counter + 1).zfill(3)
+            traj_file_name = f"mouse_trajectory_{num}.png"
+            TrajFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name)
+            traj_coord_file_name = f"mouse_trajectory_coord_{num}.csv"
+            TrajCoordFilePath = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_coord_file_name)
+            with open(TrajCoordFilePath, 'w', newline='') as file:
+                writer = csv.writer(file, delimiter = ";")
+                writer.writerow(['X', 'Y']) 
+                writer.writerows(coordinates) 
+                img.save(TrajFilePath)
+        if type == "agg_trial":
+            num = str(self.trial_counter + 1).zfill(3)
+            traj_file_name_agg = f"mouse_trajectory_trial_agg_{num}.png"
+            TrajFilePathAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_agg)
+            img.save(TrajFilePathAgg)
+        if type == "agg_velocity":
+            num = str(self.trial_counter + 1).zfill(3)
+            traj_file_name_agg = f"mouse_trajectory_velocity_agg_{num}.png"
+            TrajFilePathAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_agg)
+            img.save(TrajFilePathAgg)
 
     def is_point_in_start_block(self, x, y):
         frame_x = self.frm_starting_block.winfo_rootx()
@@ -244,6 +381,7 @@ class StartWindow:
 
     def on_space_press(self, event):
         if self.can_skip_next_trial:
+            #self.lptPort.sendEvent(251) 
             # to finish recording the trajectory
             self.target_center_reached = True 
             if self.after_wait_enter_target:
@@ -277,7 +415,7 @@ class StartWindow:
 
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
         self.root.config(cursor="")
-        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):
@@ -301,48 +439,89 @@ class StartWindow:
             center_y - target_height / 2 <= y <= center_y + target_height / 2
         )
         return in_region
-    
+   
+    def has_mouse_moved(self, x, y):
+       if x != self.cross_center[0] or  y != self.cross_center[1]:
+          self.mouse_has_moved = True
+          return True 
+         
     def show_target_based_on_pos(self):
-        self.seconds_elapsed += 0.1
-        # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
-        _, y = pyautogui.position()
+        self.seconds_elapsed += self.refresh_rate/1000
+        if self.DisplayTimer:
+            self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
+        x, y = pyautogui.position()
         if self.recording == False:
             self.capture_trajectory(sampling_rate=self.TrajSamplingRate)
         # Check if the mouse is above the trigger
+        # if self.has_mouse_moved(x, y) and self.mouse_has_moved == False:
+        #     if self.Inverted:
+        #        self.lptPort.sendEvent(221)
+        #     else:
+        #        self.lptPort.sendEvent(220)
         if y < (self.TriggerPos[self.trial_counter]) * self.screen_height:
             # unpack centered decoy target image
             self.lbl_decoy_target.place_forget()
             # set new target image
             self.lbl_target.config(image=self.img_target_preloaded)
             self.lbl_target['image'] = self.img_target_preloaded
+            # if self.TargetPos[self.trial_counter] == 0:
+            #    self.lptPort.sendEvent(230) 
+            # if self.TargetPos[self.trial_counter] == 1:
+            #    self.lptPort.sendEvent(231) 
+            # if self.TargetPos[self.trial_counter] == 2:
+            #    self.lptPort.sendEvent(232) 
             self.target_set = True
             self.can_skip_next_trial = True
             self.wait_enter_target()
         else:
-            self.root.after(100, lambda: self.show_target_based_on_pos())
+            self.root.after(self.refresh_rate, lambda: self.show_target_based_on_pos())
+    
+    def is_target_center_reached(self, x, y):
+        target_x = self.lbl_target.winfo_rootx()
+        target_y = self.lbl_target.winfo_rooty()
+        target_width = self.TargetSize
+        target_height = self.TargetSize
+        center_x = target_x + target_width / 2
+        center_y = target_y + target_height / 2
+        # the center of the target icon is 1/5 its size
+        region_width = target_width / 5
+        region_height = target_height / 5
+        in_center_region = (
+            center_x - region_width / 2 <= x <= center_x + region_width / 2 and
+            center_y - region_height / 2 <= y <= center_y + region_height / 2
+        )
+        return in_center_region
 
     def wait_enter_target(self):
         x, y = pyautogui.position()
-        self.seconds_elapsed += 0.01
-        # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
+        self.seconds_elapsed += self.refresh_rate/1000 
+        if self.DisplayTimer:
+           self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
         if self.is_target_reached(x, y):
+            #self.lptPort.sendEvent(240)
             self.wait_end_trial()
         else:
-            self.after_wait_enter_target = self.root.after(10, lambda: self.wait_enter_target())
+            self.after_wait_enter_target = self.root.after(self.refresh_rate, lambda: self.wait_enter_target())
            
     def wait_end_trial(self):
         self.time_in_target += 10 
-        self.seconds_elapsed += 0.01
-        # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
+        self.seconds_elapsed += self.refresh_rate/1000
+        if self.DisplayTimer:
+           self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
         x, y = pyautogui.position()
-        #if self.is_target_center_reached(x, y) or self.time_in_target >= self.TimeToCenterTarget:
+        # if self.is_target_center_reached(x, y) or self.time_in_target >= self.TimeToCenterTarget:
+        if self.is_target_center_reached(x, y) and self.center_target_reached == False:
+            self.center_target_reached = True 
+            #self.lptPort.sendEvent(241)
         if self.time_in_target >= self.TimeToCenterTarget:
+            #self.lptPort.sendEvent(250)
             self.target_center_reached = True
             self.can_skip_next_trial = False
             self.move_next_trial()
-            # self.lbl_timer.config(text=str(self.seconds_elapsed) 
+            if self.DisplayTimer:
+               self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
         else:
-            self.after_wait_end_trial = self.root.after(10, lambda: self.wait_end_trial())
+            self.after_wait_end_trial = self.root.after(self.refresh_rate, lambda: self.wait_end_trial())
 
     def move_next_trial(self):
         if self.Inverted:
@@ -356,7 +535,9 @@ class StartWindow:
         self.time_in_target = 0
         if self.recording == True:
             self.recording = False
-            self.save_trajectory_info(self.coordinates, self.img)
+            self.save_trajectory_info(self.coordinates, self.img, "new")
+            self.save_trajectory_info(self.coordinates, self.agg_trial_image, "agg_trial")
+            self.save_trajectory_info(self.coordinates, self.agg_velocity_image, "agg_velocity")
         self.trial_counter += 1
         self.global_update()
 
@@ -377,54 +558,67 @@ class StartWindow:
             font=("Arial", 24), bg="blue",  fg="white", width=self.canvas.winfo_screenwidth(), height=3)
             self.lbl_transition.pack(anchor="n", fill="x")
             self.write_absolute_positions()
+            #self.lptPort.sendEvent(255)
             self.root.after(5000, lambda: self.restart_window())
 
     def trial_update(self):
-        self.seconds_elapsed += 0.1
-        # self.lbl_timer.config(text=str(int(self.seconds_elapsed)))
+        self.seconds_elapsed += self.refresh_rate/1000
+        if self.DisplayTimer:
+           self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000):
             if self.MouseAppears[self.trial_counter]:
                 if self.TriangleDirection[self.trial_counter] == 0:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_90_preloaded)
                    self.lbl_triangle.image = self.img_triangle_90_preloaded
+                   #self.lptPort.sendEvent(200)
                 elif self.TriangleDirection[self.trial_counter] == 1:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_preloaded)
                    self.lbl_triangle.image = self.img_triangle_preloaded
+                   #self.lptPort.sendEvent(201)
                 elif self.TriangleDirection[self.trial_counter] == 2:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_270_preloaded)
                    self.lbl_triangle.image = self.img_triangle_270_preloaded
+                   #self.lptPort.sendEvent(202)
             else:
                 if self.TriangleDirection[self.trial_counter] == 0:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_90_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_90_preloaded
+                   #self.lptPort.sendEvent(210)
                 elif self.TriangleDirection[self.trial_counter] == 1:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_preloaded
+                   #self.lptPort.sendEvent(211)
                 elif self.TriangleDirection[self.trial_counter] == 2:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_270_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_270_preloaded
+                   #self.lptPort.sendEvent(212)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000): 
             self.lbl_triangle.place_forget()
             self.lbl_red_triangle.place_forget()
+            # if self.MouseAppears[self.trial_counter]:
+            #     self.lptPort.sendEvent(205)
+            # else:
+            #     self.lptPort.sendEvent(215)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
-            unlock_cursor()
+            #unlock_cursor() # Windows Implementation
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
+            #self.lptPort.sendEvent(100)
             if self.Inverted: 
                # TODO add path to sakasa.exe
-               subprocess.Popen("C:\\Users\\Lucien\\Desktop\\Mouse\\sakasa.exe", shell=True)
+               subprocess.Popen("C:\\Users\\Lucien\\Desktop\\Mouse\\sakasa.exe", shell=True) 
             if not self.MouseAppears[self.trial_counter]:
                self.root.config(cursor="none")
             self.show_target_based_on_pos()
 
         elif self.seconds_elapsed > 0: 
-            self.root.after(100, lambda: self.trial_update())  
+            self.root.after(self.refresh_rate, lambda: self.trial_update())  
 
     def gen_csv_config_file(self): 
         np.random.seed(42)
@@ -500,12 +694,12 @@ class StartWindow:
             file.write(abs_target_boundaries + '\n')
             file.write(abs_starting_point + '\n')
 
+# Windows implementation
+# def lock_cursor_to_rect(x, y, width, height):
+#     rect = RECT(x, y, x + width, y + height)
+#     user32.ClipCursor(ctypes.byref(rect))
 
-def lock_cursor_to_rect(x, y, width, height):
-    rect = RECT(x, y, x + width, y + height)
-    user32.ClipCursor(ctypes.byref(rect))
-
-def unlock_cursor():
-    user32.ClipCursor(None)
+# def unlock_cursor():
+#     user32.ClipCursor(None)
 
     

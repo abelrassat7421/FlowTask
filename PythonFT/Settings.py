@@ -16,7 +16,7 @@ class SettingsWindow:
     def __init__(self, master, json_file): 
         self.settings_window = tk.Toplevel(master)
         self.settings_window.title('Settings')
-        self.settings_window.focus_set() # Window Implemetation
+        #self.settings_window.focus_set() # Window Implemetation
         self.settings_window.attributes('-fullscreen', True)
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
 

@@ -12,6 +12,8 @@
             "answer_range": 9
         }
     ],
+    "task_instructions": "Give instructions for the task here ------ This message can be long and can be displayed for an amount of time that can be adjusted below",
+    "task_instructions_duration": 5,
     "inverted": false,
     "trigger_visible": true,
     "direction_triangles": true,
@@ -32,5 +34,6 @@
     "time_to_center_of_target": 2000,
     "triangle_time": 1000,
     "num_random_trial": 3,
-    "target_size": 120
+    "target_size": 120,
+    "display_timer": false
 }
