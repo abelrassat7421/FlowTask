@@ -35,5 +35,5 @@
     "triangle_time": 1000,
     "num_random_trial": 6,
     "target_size": 120,
-    "display_timer": false
+    "display_timer": true
 }
