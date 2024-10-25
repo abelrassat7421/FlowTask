@@ -33,7 +33,7 @@
     "inter-trial_time": 1000,
     "time_to_center_of_target": 2000,
     "triangle_time": 1000,
-    "num_random_trial": 3,
+    "num_random_trial": 6,
     "target_size": 120,
     "display_timer": false
 }
