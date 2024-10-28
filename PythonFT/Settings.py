@@ -287,7 +287,7 @@ class SettingsWindow:
         btn_close = ttk.Button(self.frm_settings, text="Close", command=self.close_settings_window)
         btn_close.grid(row=23, column=0, pady=2, padx=20, sticky='w')
 
-        lbl_remark = tk.Label(master=self.frm_settings, text="NB: Pour référence, la croix de départ se situe à 5% de la hauteur de l'écran et tous les temps sont en (ms).", font=("Arial", 12, "italic"))
+        lbl_remark = tk.Label(master=self.frm_settings, text="NB: As a reference, the starting cross is at 5% of the screen height and times are in miliseconds (ms).", font=("Arial", 12, "italic"))
         lbl_remark.grid(row=24, column=0, pady=10, padx=20, sticky='w')
 
     def on_configure(self, event):

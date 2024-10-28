@@ -86,7 +86,8 @@ We present here a brief desciption of what each parameter controls for in the Fl
     1. First column: (int) Sets the position of the target for each trial. Accepted values are 0, 1, 2 (left, center, right respectively)
     2. Second column: (int) Determines whether the mouse is visible or not for a given trial.
     3. Third column: (float) Determines where the trigger (horizontal bar) lies. Accepted values are between 0.0 and 100.0 (percentage of the screen height with 100% referring to the top of the screen).
-    4. Fourth column: (int) Time in (ms) sets the time between when yellow triangle disappears and when the target appears. 
+    4. Fourth column: (int) Time in (ms) sets the time between when yellow triangle disappears and when the target appears.
+    5. (*if triangles directions are activated*) Fifth column: (int) Determines the direction of the triangle. When not equal to the first column the intention is to trick the subjects. The accepted values are the same as for column one. 
   - If set to false, the user must choose the frequency at which the mouse should appear across trials, the number of different trigger positions (with corresponding values) and the number of different time intervals between the disappearance of the yellow triangle and the appearance of the target (with corresponding values again). These parameters can be readily selected through the the **Settings** window. The [trial_by_trial_config.csv](Configurations/trial_by_trial_config.csv) file is then automatically generated assuming the following: 
     - the target will be on the left or on the right with probability 45% each (and a probability of 10% of staying in the middle)
     - mouse appears at the given frequency
@@ -100,8 +101,6 @@ We present here a brief desciption of what each parameter controls for in the Fl
 - **Number of Random Trials**: Number of trials for one task.
 - **Target Size**: Adjust the size of the target to your liking.
 
-
-
 ---
 
 ### 2.6 Mouse Inversion Option (Windows users)
@@ -110,7 +109,9 @@ We present here a brief desciption of what each parameter controls for in the Fl
 <div style="text-align: center;">
    <img src="Configurations/Images/sakasa_path_readme.png" alt="sakasa path" width="600"/>
 </div>
+
 ---
+
 ### 2.7 Program Outputs
 - The application outputs the answers to questions, a file with the major landmarks of the task e.g., starting point, a copy of the configuration files, a picture with the trajectory for each trial and a csv for the trajectory coordinates. Note the coordinate system used where the origin is the upper left corner of the screen. 
 <div style="text-align: center;">
@@ -153,5 +154,5 @@ If any help is needed, I'll be happy to lend a hand at abelrasssat@gmail.com.
 
 Icon credits: 
 - <a href="https://www.flaticon.com/free-icons/triangle" title="triangle icons">Triangle icons created by riajulislam - Flaticon</a>
-- <a href="https://www.flaticon.com/free-icons/close" title="close icons">Close icons created by ariefstudio - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/close" title="cross icons">Cross icons created by ariefstudio - Flaticon</a>
 

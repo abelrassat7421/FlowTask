@@ -15,6 +15,7 @@ import sys
 import datetime
 import colorsys
 import time
+from collections import Counter
 
 #import ctypes # Windows implementation
 import subprocess
@@ -189,22 +190,31 @@ class StartWindow:
             self.lbl_timer = tk.Label(master=self.canvas, text="0")
             self.lbl_timer.place(relx=0.95, rely=0.95, anchor='sw') 
 
-        # TODO Choose a colormap for aggregate trajectories (one color per trial)
-
+        # NOTE Choose a colormap for aggregate trajectories (one color per trial)
         colormap_name = 'jet' #'spring'  # other sequential colormaps are the other season names or 'cool'
         # give the link for all colormapsof the matplotlib colormaps
         cmap = plt.get_cmap(colormap_name)
-        num_intervals = self.NumTrials
-        intervals = np.linspace(0, 1, num_intervals)
+        target_pos_counts = Counter(self.TargetPos)
+        # find maximum occurence 
+        max_occurence = max(target_pos_counts.values())
+        intervals = np.linspace(0, 1, max_occurence) 
         colors = [cmap(interval) for interval in intervals]
         self.hex_colors_trial = [mcolors.to_hex(color) for color in colors]
 
-        # TODO Choose a colormap for aggregate trajectories (color change according to velocity)
+        # NOTE Choose a colormap for aggregate trajectories (color change according to velocity)
         colormap_name = 'winter' # # other sequential colormaps are the other season names or 'cool'
         # reverse the colormap to have the lowest velocity in green
         self.cmap_velocity = plt.get_cmap(colormap_name).reversed()
-        scaling_factor = 0.1 # choose appropriate scaling factor for maximum velocity TODO
+        scaling_factor = 0.1 # NOTE choose appropriate scaling factor for maximum velocity 
         self.max_velocity = np.sqrt(self.screen_width**2 + self.screen_height**2)/self.TrajSamplingRate * scaling_factor # assuming it's the diagonal of the screen traversed at the recording rate
+
+        # list to for aggregated trajectories by trial to have to have separate increments in colors for 
+        # different target directions 
+        self.occurrences = {0: 0, 1: 0, 2: 0}
+        self.agg_traject_idx = []
+        for num in self.TargetPos:
+            self.agg_traject_idx.append(self.occurrences[num])
+            self.occurrences[num] += 1            
 
         self.open_instructions_window(instructions=self.TaskInstructions, duration=self.TaskInstructionsDuration)
         #time.sleep(self.TaskInstructionsDuration)
@@ -259,6 +269,7 @@ class StartWindow:
 
 # Methods for drawing and recording mouse trajectory
     def draw_line(self, event=None):
+        # Draw a line at the trigger position
         self.trigger_line = self.canvas.create_line(0, self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], self.canvas.winfo_width(), self.canvas.winfo_height()*self.TriggerPos[self.trial_counter], fill="black", dash=(10))
 
     def capture_trajectory(self, sampling_rate=100): 
@@ -293,6 +304,8 @@ class StartWindow:
             self.agg_velocity_image = Image.new("RGB", (self.screen_width, self.screen_height), "white")
             agg_trial_draw = ImageDraw.Draw(self.agg_trial_image)
             agg_velocity_draw = ImageDraw.Draw(self.agg_velocity_image)
+
+            # Paste the target and cross images onto the Image object
             _, _, _, a = self.image_tar_resized.split()
             self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.15 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
@@ -305,14 +318,8 @@ class StartWindow:
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             _, _, _, a = self.image_cross_resized.split()
-            self.agg_velocity_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
-
-            # Paste the colorbar image onto the original PIL Image object
-            # Perhaps remove TODO 
-            #offset = 0  # adjust the offset as needed - may need to adjust based on screen dimensions TODO
-            #self.agg_trial_image.paste(self.image_spring_colorbar, (offset, 0))
-            #self.agg_velocity_image.paste(self.image_winter_colorbar, (offset, 0))
-
+            self.agg_velocity_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)        
+        
         _, _, _, a = self.image_tar_resized.split()
         self.img.paste(self.image_tar_resized, (round(self.lbl_target.winfo_rootx()), round(self.lbl_target.winfo_rooty())), mask=a)
         _, _, _, a = self.image_cross_resized.split()
@@ -337,10 +344,9 @@ class StartWindow:
             if type == "new":
                draw.line([(prev_x, prev_y), (x, y)], fill="black", width=2)
             if type == "agg_trial": 
-               draw.line([(prev_x, prev_y), (x, y)], fill=self.hex_colors_trial[self.trial_counter], width=2) 
+               draw.line([(prev_x, prev_y), (x, y)], fill=self.hex_colors_trial[self.agg_traject_idx[self.trial_counter]], width=2) 
             if type == "agg_velocity":
                 color_num = np.log(self.mouse_velocity(prev_x, prev_y, x, y) + 1)/np.log(self.max_velocity + 1)
-                #print(f"Debug velocities: {self.mouse_velocity(prev_x, prev_y, x, y), self.max_velocity, np.log(self.mouse_velocity(prev_x, prev_y, x, y)), np.log(self.max_velocity), np.log(self.mouse_velocity(prev_x, prev_y, x, y) + 1), np.log(self.max_velocity*0.1 + 1)}")
                 color = self.cmap_velocity(color_num) 
                 draw.line([(prev_x, prev_y), (x, y)], fill=mcolors.to_hex(color) , width=2)
             if self.target_center_reached == True: 
