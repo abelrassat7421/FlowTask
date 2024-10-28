@@ -87,7 +87,7 @@ class MainWindow(tk.Tk):
 
     def open_folder(self):
         subprocess.run(["open", self.OutputPath])
-        #os.startfile(self.OutputPath) # Windows Implementation
+        os.startfile(self.OutputPath) # Windows Implementation
  
     def toggle_fullscreen(self, event=None):
         state = not self.attributes('-fullscreen')  

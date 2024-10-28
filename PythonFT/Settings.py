@@ -442,7 +442,7 @@ class SettingsWindow:
 
     def open_config(self):
         subprocess.run(["open", self.ConfigFilePath])
-        #os.startfile(self.ConfigFilePath) # Windows Implementation
+        os.startfile(self.ConfigFilePath) # Windows Implementation
 
     def save_settings(self):        
         val_num_questions = self.clk_num_quest.get()

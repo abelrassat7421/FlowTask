@@ -17,7 +17,7 @@ import colorsys
 import time
 from collections import Counter
 
-#import ctypes # Windows implementation
+import ctypes # Windows implementation
 import subprocess
 
 from Config import *
@@ -26,15 +26,15 @@ from Questions import *
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-# class RECT(ctypes.Structure):
-#     _fields_ = [("left", ctypes.c_long),
-#                 ("top", ctypes.c_long),
-#                 ("right", ctypes.c_long),
-#                 ("bottom", ctypes.c_long)]
+class RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long),
+                ("top", ctypes.c_long),
+                ("right", ctypes.c_long),
+                ("bottom", ctypes.c_long)]
                 
 # Windows implementation 
 # Load user32.dll for blocking mouse
-#user32 = ctypes.windll.user32
+user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -441,7 +441,7 @@ class StartWindow:
 
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
         self.root.config(cursor="")
-        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):

@@ -12,7 +12,7 @@
             "answer_range": 9
         }
     ],
-    "task_instructions": "Give instructions for the task here ------ This message can be long and can be displayed for an amount of time that can be adjusted below",
+    "task_instructions": "*** Give instructions for the task here ***\n\n\nThis message can be long and can be displayed for an amount of time that can be adjusted below",
     "task_instructions_duration": 5,
     "inverted": false,
     "trigger_visible": true,
