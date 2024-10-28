@@ -8,7 +8,7 @@ import pyautogui
 pyautogui.FAILSAFE = False
 import time
 import numpy as np
-#from LptPort import LptPort 
+from LptPort import LptPort 
 
 from Config import *
 
@@ -49,10 +49,10 @@ class QuestionsWindow:
         for mouse_event in ["<Button-1>", "<Button-2>", "<Button-3>", "<Double-Button-1>", "<B1-Motion>", "<Enter>", "<Leave>", "<MouseWheel>"]:
             self.window.bind(mouse_event, self.disable_mouse)
 
-        # try: 
-        #     self.lptPort = LptPort(0x0378)   # Idea: should add the '0x0378' and other std LPT adresses in settings pannel
-        # except:
-        #     print("WARNING: LPT port NOT opened!")
+        try: 
+            self.lptPort = LptPort(0x0378)   # Idea: should add the '0x0378' and other std LPT adresses in settings pannel
+        except:
+            print("WARNING: LPT port NOT opened!")
 
         # go through all questions with the given timing
         self.pass_through_questions(self.Questions[self.question_tracker])
@@ -67,10 +67,10 @@ class QuestionsWindow:
 
         self.lbl_guidelines = tk.Label(master=self.frm_questions, text=f"(Select a number between 1 and {quest['answer_range']} on your keyboard)", font=("Arial", 12, "italic"))
         self.lbl_guidelines.grid(row=0, column=2 , padx=20, sticky='w')
-        # if self.timing == "pre":
-        #     self.lptPort.sendEvent(self.question_tracker*10)
-        # if self.timing == "post":
-        #     self.lptPort.sendEvent(self.question_tracker*10 + 100)
+        if self.timing == "pre":
+            self.lptPort.sendEvent(self.question_tracker*10)
+        if self.timing == "post":
+            self.lptPort.sendEvent(self.question_tracker*10 + 100)
 
         self.wait_move_to_next_question()
 
@@ -79,10 +79,10 @@ class QuestionsWindow:
         if self.valid_key_pressed == True:
             answer = self.quest_answers[-1]
             event_num = (self.question_tracker)*10 + answer
-            # if self.timing == "pre":
-            #    self.lptPort.sendEvent(event_num)
-            # if self.timing == "post":
-            #    self.lptPort.sendEvent(event_num+100)
+            if self.timing == "pre":
+               self.lptPort.sendEvent(event_num)
+            if self.timing == "post":
+               self.lptPort.sendEvent(event_num+100)
             self.clear_window_for_next_questions(self.timing)
             if self.question_tracker < self.num_questions:
                self.pass_through_questions(self.Questions[self.question_tracker])

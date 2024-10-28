@@ -22,7 +22,7 @@ import subprocess
 
 from Config import *
 from Questions import *
-#from LptPort import LptPort   # Added by MP to sync with EEG amplifiers 
+from LptPort import LptPort   # Added by MP to sync with EEG amplifiers 
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
@@ -45,11 +45,11 @@ class StartWindow:
         self.screen_height = self.root.screen_height
         self.config = Config(self.root.ConfigFilePath, self.root)
 
-        # try: 
-        #     self.lptPort = LptPort(0x0378)# Idea: should add the '0x0378' and other std LPT adresses in settings pannel
-        # except:
-        #     print("WARNING: LPT port NOT opened!") 
-        # self.lptPort.sendEvent(0)     
+        try: 
+            self.lptPort = LptPort(0x0378)# Idea: should add the '0x0378' and other std LPT adresses in settings pannel
+        except:
+            print("WARNING: LPT port NOT opened!") 
+        self.lptPort.sendEvent(0)     
 
         self.target_set = False
         self.target_center_reached = False 
@@ -265,7 +265,7 @@ class StartWindow:
         self.trigger_set = False
         self.mouse_has_moved = False
         self.center_target_reached = False
-        #self.lptPort.sendEvent(2)
+        self.lptPort.sendEvent(2)
 
 # Methods for drawing and recording mouse trajectory
     def draw_line(self, event=None):
@@ -407,7 +407,7 @@ class StartWindow:
 
     def on_space_press(self, event):
         if self.can_skip_next_trial:
-            #self.lptPort.sendEvent(251) 
+            self.lptPort.sendEvent(251) 
             # to finish recording the trajectory
             self.target_center_reached = True 
             if self.after_wait_enter_target:
@@ -486,23 +486,23 @@ class StartWindow:
         if self.recording == False:
             self.capture_trajectory(sampling_rate=self.TrajSamplingRate)
         # Check if the mouse is above the trigger
-        # if self.has_mouse_moved(x, y) and self.mouse_has_moved == False:
-        #     if self.Inverted:
-        #        self.lptPort.sendEvent(221)
-        #     else:
-        #        self.lptPort.sendEvent(220)
+        if self.has_mouse_moved(x, y) and self.mouse_has_moved == False:
+            if self.Inverted:
+               self.lptPort.sendEvent(221)
+            else:
+               self.lptPort.sendEvent(220)
         if y < (self.TriggerPos[self.trial_counter]) * self.screen_height:
             # unpack centered decoy target image
             self.lbl_decoy_target.place_forget()
             # set new target image
             self.lbl_target.config(image=self.img_target_preloaded)
             self.lbl_target['image'] = self.img_target_preloaded
-            # if self.TargetPos[self.trial_counter] == 0:
-            #    self.lptPort.sendEvent(230) 
-            # if self.TargetPos[self.trial_counter] == 1:
-            #    self.lptPort.sendEvent(231) 
-            # if self.TargetPos[self.trial_counter] == 2:
-            #    self.lptPort.sendEvent(232) 
+            if self.TargetPos[self.trial_counter] == 0:
+               self.lptPort.sendEvent(230) 
+            if self.TargetPos[self.trial_counter] == 1:
+               self.lptPort.sendEvent(231) 
+            if self.TargetPos[self.trial_counter] == 2:
+               self.lptPort.sendEvent(232) 
             self.target_set = True
             self.can_skip_next_trial = True
             self.wait_enter_target()
@@ -532,7 +532,7 @@ class StartWindow:
         if self.DisplayTimer:
            self.lbl_timer.config(text=str(round(self.seconds_elapsed, 2)))
         if self.is_target_reached(x, y):
-            #self.lptPort.sendEvent(240)
+            self.lptPort.sendEvent(240)
             self.wait_end_trial()
         else:
             self.after_wait_enter_target = self.root.after(self.refresh_rate, lambda: self.wait_enter_target())
@@ -546,9 +546,9 @@ class StartWindow:
         # if self.is_target_center_reached(x, y) or self.time_in_target >= self.TimeToCenterTarget:
         if self.is_target_center_reached(x, y) and self.center_target_reached == False:
             self.center_target_reached = True 
-            #self.lptPort.sendEvent(241)
+            self.lptPort.sendEvent(241)
         if self.time_in_target >= self.TimeToCenterTarget:
-            #self.lptPort.sendEvent(250)
+            self.lptPort.sendEvent(250)
             self.target_center_reached = True
             self.can_skip_next_trial = False
             self.move_next_trial()
@@ -592,7 +592,7 @@ class StartWindow:
             font=("Arial", 24), bg="blue",  fg="white", width=self.canvas.winfo_screenwidth(), height=3)
             self.lbl_transition.pack(anchor="n", fill="x")
             self.write_absolute_positions()
-            #self.lptPort.sendEvent(255)
+            self.lptPort.sendEvent(255)
             self.root.after(5000, lambda: self.restart_window())
 
     def trial_update(self):
@@ -605,46 +605,46 @@ class StartWindow:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_90_preloaded)
                    self.lbl_triangle.image = self.img_triangle_90_preloaded
-                   #self.lptPort.sendEvent(200)
+                   self.lptPort.sendEvent(200)
                 elif self.TriangleDirection[self.trial_counter] == 1:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_preloaded)
                    self.lbl_triangle.image = self.img_triangle_preloaded
-                   #self.lptPort.sendEvent(201)
+                   self.lptPort.sendEvent(201)
                 elif self.TriangleDirection[self.trial_counter] == 2:
                    self.lbl_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_triangle.config(image=self.img_triangle_270_preloaded)
                    self.lbl_triangle.image = self.img_triangle_270_preloaded
-                   #self.lptPort.sendEvent(202)
+                   self.lptPort.sendEvent(202)
             else:
                 if self.TriangleDirection[self.trial_counter] == 0:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_90_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_90_preloaded
-                   #self.lptPort.sendEvent(210)
+                   self.lptPort.sendEvent(210)
                 elif self.TriangleDirection[self.trial_counter] == 1:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_preloaded
-                   #self.lptPort.sendEvent(211)
+                   self.lptPort.sendEvent(211)
                 elif self.TriangleDirection[self.trial_counter] == 2:
                    self.lbl_red_triangle.place(relx=0.5, rely=0.5, anchor='center') 
                    self.lbl_red_triangle.config(image=self.img_red_triangle_270_preloaded)
                    self.lbl_red_triangle.image = self.img_red_triangle_270_preloaded
-                   #self.lptPort.sendEvent(212)
+                   self.lptPort.sendEvent(212)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000): 
             self.lbl_triangle.place_forget()
             self.lbl_red_triangle.place_forget()
-            # if self.MouseAppears[self.trial_counter]:
-            #     self.lptPort.sendEvent(205)
-            # else:
-            #     self.lptPort.sendEvent(215)
+            if self.MouseAppears[self.trial_counter]:
+                self.lptPort.sendEvent(205)
+            else:
+                self.lptPort.sendEvent(215)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
             unlock_cursor() # Windows implemetation
 
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
-            #self.lptPort.sendEvent(100)
+            self.lptPort.sendEvent(100)
             if self.Inverted: 
                # TODO add path to sakasa.exe
                subprocess.Popen("C:\\Users\\Lucien\\Desktop\\Mouse\\sakasa.exe", shell=True) 
