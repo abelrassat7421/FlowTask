@@ -5,6 +5,7 @@ import os
 import json
 from PIL import Image,ImageTk,ImageDraw
 import pyautogui
+pyautogui.FAILSAFE = False
 import time
 import numpy as np
 import subprocess
@@ -18,6 +19,7 @@ class SettingsWindow:
         self.settings_window.title('Settings')
         #self.settings_window.focus_set() # Window Implemetation
         self.settings_window.attributes('-fullscreen', True)
+
         # settings.iconbitmap('PythonFlowTask/target.ico') some settings/gear icon to add
 
         # Creating Config path for manual configuration of certain parameters
@@ -43,6 +45,8 @@ class SettingsWindow:
         
         # creating labels
         lbl_num_quest = tk.Label(master=self.frm_settings, text="Number of questions:")
+        lbl_task_instructions = tk.Label(master=self.frm_settings, text="Task instructions:")
+        lbl_task_instructions_duration = tk.Label(master=self.frm_settings, text="Task instructions duration (s):")
         lbl_inverted = tk.Label(master=self.frm_settings, text="Is Inverted?:")
         lbl_trigger_visible = tk.Label(master=self.frm_settings, text="Trigger Visible?:")
         lbl_direction_triangles = tk.Label(master=self.frm_settings, text="Have triangles for direction?:") 
@@ -80,7 +84,7 @@ class SettingsWindow:
         lbl_num_random_trial.grid(row=16, column=0, pady=2, sticky='w')
         lbl_target_size.grid(row=17, column=0, pady=2, sticky='w')
         canvas4.grid(row=18, column=0, sticky="ew", pady=(0, 0))
-        
+
         # drawing the lines
         canvas1.create_line(0, 1, canvas1.winfo_reqwidth(), 1, fill="black")
         canvas2.create_line(0, 1, canvas2.winfo_reqwidth(), 1, fill="black")
@@ -91,12 +95,13 @@ class SettingsWindow:
         self.optionTF = [True, False]
         self.option_timing = ["pre", "post"]
         self.clk_num_quest = tk.IntVar()
+        self.clk_task_instructions_duration = tk.IntVar()
         self.clk_inverted = tk.BooleanVar()
         self.clk_trigger_visible = tk.BooleanVar()
         self.clk_direction_triangles = tk.BooleanVar()
         self.clk_configure_with_csv = tk.BooleanVar()
         self.clk_display_timer = tk.BooleanVar()
-        
+
         # creating entry boxes
         self.ent_trajectory_sampling_rate = ttk.Entry(self.frm_settings)
         self.ent_preparation_time = ttk.Entry(self.frm_settings)
@@ -111,6 +116,8 @@ class SettingsWindow:
             data = json.load(file)
             
             self.clk_num_quest.set(data["num_questions"])
+            self.clk_task_instructions_duration.set(data["task_instructions_duration"])
+            self.txt_task_instruction.insert(tk.END, data["task_instructions"])
             self.clk_inverted.set(data["inverted"])
             self.clk_trigger_visible.set(data["trigger_visible"])
             self.clk_direction_triangles.set(data["direction_triangles"])
@@ -123,9 +130,11 @@ class SettingsWindow:
             self.ent_triangle_time.insert(0, data["triangle_time"])
             self.ent_num_random_trial.insert(0, data["num_random_trial"])
             self.ent_target_size.insert(0, data["target_size"])
+            self.clk_display_timer.set(data["display_timer"])
 
         # creating option menus 
         drp_num_quest = ttk.OptionMenu(self.frm_settings, self.clk_num_quest, self.clk_num_quest.get(), *range(0, 11), command=self.update_questions)
+        drp_task_instructions_duration = ttk.OptionMenu(self.frm_settings, self.clk_task_instructions_duration, self.clk_task_instructions_duration.get(), *range(0, 11))
         drp_inverted = ttk.OptionMenu(self.frm_settings, self.clk_inverted, self.clk_inverted.get(), *self.optionTF) 
         drp_trigger_visible = ttk.OptionMenu(self.frm_settings, self.clk_trigger_visible, self.clk_trigger_visible.get(), *self.optionTF)
         drp_direction_triangles = ttk.OptionMenu(self.frm_settings, self.clk_direction_triangles, self.clk_direction_triangles.get(), *self.optionTF, command=self.update_triangle_direction_param)
@@ -146,6 +155,7 @@ class SettingsWindow:
         self.ent_triangle_time.grid(row=15, column=1, pady=2, padx=10, sticky='w')
         self.ent_num_random_trial.grid(row=16, column=1, pady=2, padx=10, sticky='w')
         self.ent_target_size.grid(row=17, column=1, pady=2, padx=10, sticky='w')
+
 
         # Create a frame to hold the Entry widgets and Option Menus that depend on other Option Menus 
         # i.e., second order widgets
@@ -274,6 +284,7 @@ class SettingsWindow:
 
         lbl_remark = tk.Label(master=self.frm_settings, text="NB: As a reference, the starting cross is at 5% of the screen height and times are in miliseconds (ms).", font=("Arial", 12, "italic"))
         lbl_remark.grid(row=22, column=0, pady=10, padx=20, sticky='w')
+
 
     def on_configure(self, event):
         # Set the scroll region after UI has been configured
@@ -442,6 +453,8 @@ class SettingsWindow:
                 "formulation": str(quest["formulation"]),
                 "answer_range": int(quest["answer_range"])
             })
+        val_task_instructions = self.txt_task_instruction.get("1.0", "end-1c")
+        val_task_instructions_duration = self.clk_task_instructions_duration.get()
         val_inverted = self.clk_inverted.get()
         val_trigger_visible = self.clk_trigger_visible.get()
         val_direction_triangles = self.clk_direction_triangles.get()
@@ -450,7 +463,7 @@ class SettingsWindow:
         if not val_configure_with_csv:
             val_mouse_appear_freq = self.auto_config_param["mouse_appear_freq"].get()
             val_num_triggers = self.auto_config_param["num_triggers"].get()
-            val_triggers = [float(entry.get()) for entry in self.auto_config_param["trigger_values"]]
+            val_triggers = [int(entry.get()) for entry in self.auto_config_param["trigger_values"]]
             val_num_triangle_target_interval = self.auto_config_param["num_triangle_target_interval"].get()
             val_time_intervals = [int(entry.get()) for entry in self.auto_config_param["time_intervals"]]
             val_freq_false_directions = self.auto_config_param["freq_false_directions"].get()
@@ -461,6 +474,7 @@ class SettingsWindow:
         val_triangle_time = self.ent_triangle_time.get()
         val_num_random_trial = self.ent_num_random_trial.get()
         val_target_size = self.ent_target_size.get()
+        val_display_timer = self.clk_display_timer.get()
 
         # Read the existing JSON data
         dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -472,6 +486,8 @@ class SettingsWindow:
 
         # Update the values
         data["num_questions"] = val_num_questions
+        data["task_instructions"] = val_task_instructions
+        data["task_instructions_duration"] = val_task_instructions_duration
         data["questions"] = val_questions
         data["inverted"] = val_inverted
         data["trigger_visible"] = val_trigger_visible
@@ -492,6 +508,7 @@ class SettingsWindow:
         data["triangle_time"] = int(val_triangle_time)
         data["num_random_trial"] = int(val_num_random_trial)
         data["target_size"] = int(val_target_size)
+        data["display_timer"] = val_display_timer
 
         # Write the updated data back to the JSON file
         with open(FilePath, 'w') as file:

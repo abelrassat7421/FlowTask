@@ -17,6 +17,7 @@ import colorsys
 import time
 from collections import Counter
 
+
 #import ctypes # Windows implementation
 import subprocess
 
@@ -44,6 +45,7 @@ class StartWindow:
         self.screen_width = self.root.screen_width
         self.screen_height = self.root.screen_height
         self.config = Config(self.root.ConfigFilePath, self.root) 
+
         # try: 
         #     self.lptPort = LptPort(0x0378)# Idea: should add the '0x0378' and other std LPT adresses in settings pannel
         # except:
@@ -238,9 +240,26 @@ class StartWindow:
     def close_instructions_window(self):
         instructions_window.destroy() 
 
+    def open_instructions_window(self, instructions, duration):
+        global instructions_window
+        instructions_window = tk.Toplevel(self.root)
+        instructions_window.title("Task Instructions")
+        self.instructions_canvas = tk.Canvas(instructions_window, width=self.screen_width, height=self.screen_height, bg=self.root.cget('bg'))
+        self.instructions_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        self.lbl_task_instructions = tk.Label(self.instructions_canvas, text="Task Instructions",
+        font=("Arial", 24), bg="blue",  fg="white", width=self.instructions_canvas.winfo_screenwidth(), height=3)
+        self.lbl_task_instructions.pack(anchor="n", fill="x")
+        label = tk.Label(self.instructions_canvas, text=instructions, font=("Arial", 20), wraplength=1000)
+        label.pack(anchor="center", pady=200)
+        instructions_window.after(duration * 1000, self.close_instructions_window)
+
+    def close_instructions_window(self):
+        instructions_window.destroy() 
+
     def new_trial(self):
         if self.trial_counter > 0:
-           self.clear_canvas()
+            self.clear_canvas()
         self.target_set = False
         self.target_center_reached = False
         self.get_ready = True 
@@ -294,14 +313,14 @@ class StartWindow:
             self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             _, _, _, a = self.image_cross_resized.split()
             self.agg_trial_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
-  
+
             _, _, _, a = self.image_tar_resized.split()
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.15 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             _, _, _, a = self.image_cross_resized.split()
             self.agg_velocity_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)        
-        
+
         _, _, _, a = self.image_tar_resized.split()
         self.img.paste(self.image_tar_resized, (round(self.lbl_target.winfo_rootx()), round(self.lbl_target.winfo_rooty())), mask=a)
         _, _, _, a = self.image_cross_resized.split()
@@ -329,6 +348,7 @@ class StartWindow:
                draw.line([(prev_x, prev_y), (x, y)], fill=self.hex_colors_trial[self.agg_traject_idx[self.trial_counter]], width=2) 
             if type == "agg_velocity":
                 color_num = np.log(self.mouse_velocity(prev_x, prev_y, x, y) + 1)/np.log(self.max_velocity + 1)
+
                 color = self.cmap_velocity(color_num) 
                 draw.line([(prev_x, prev_y), (x, y)], fill=mcolors.to_hex(color) , width=2)
             if self.target_center_reached == True: 
@@ -339,8 +359,8 @@ class StartWindow:
             self.root.after(self.interval, lambda: self.record_and_draw_last_traj_pt(draw, x, y, type))
             
     def mouse_velocity(self, prev_x, prev_y, x, y):
-        return np.sqrt((prev_x - x)**2 + (prev_y - y)**2)/self.TrajSamplingRate
-               
+        return np.sqrt((prev_x - x)**2 + (prev_y - y)**2)/self.TrajSamplingRate   
+
     def save_trajectory_info(self, coordinates, img, type):
         dir_path = os.path.dirname(os.path.abspath(__file__))
         dir_output = "Output"
@@ -367,6 +387,7 @@ class StartWindow:
             traj_file_name_agg = f"mouse_trajectory_velocity_agg_{num}.png"
             TrajFilePathAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_agg)
             img.save(TrajFilePathAgg)
+
 
     def is_point_in_start_block(self, x, y):
         frame_x = self.frm_starting_block.winfo_rootx()
@@ -621,6 +642,7 @@ class StartWindow:
             #     self.lptPort.sendEvent(215)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
             #unlock_cursor() # Windows Implementation
+
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
             #self.lptPort.sendEvent(100)
@@ -644,7 +666,6 @@ class StartWindow:
         target_pos_key = [0, 1, 2] # left, center, right respectively 
         target_pos_probabilities = [0.45, 0.10, 0.45]
         target_pos = np.random.choice(target_pos_key, self.NumTrials, p=target_pos_probabilities)
-
         # 2) Mouse appears frequency
         mouse_appear_key = [0, 1]
         mouse_probabilities = [1-(self.MouseAppearFreq/100), self.MouseAppearFreq/100]
@@ -715,5 +736,6 @@ class StartWindow:
 
 # def unlock_cursor():
 #     user32.ClipCursor(None)
+
 
     

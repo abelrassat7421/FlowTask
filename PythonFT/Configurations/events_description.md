@@ -200,4 +200,9 @@
 | Post Question 9 (answer 7) | 197
 | Post Question 9 (answer 8) | 198
 | Post Question 9 (answer 9) | 199
+<<<<<<< HEAD
 | End | 255  |
+=======
+| End | 255  |
+
+>>>>>>> without_LPT_WINDOWS
