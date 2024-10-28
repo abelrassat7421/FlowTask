@@ -200,9 +200,4 @@
 | Post Question 9 (answer 7) | 197
 | Post Question 9 (answer 8) | 198
 | Post Question 9 (answer 9) | 199
-<<<<<<< HEAD
 | End | 255  |
-
-=======
-| End | 255  |
->>>>>>> 4a3a71f (new_color_for_trajectory)
