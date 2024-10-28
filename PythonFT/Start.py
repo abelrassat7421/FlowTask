@@ -187,7 +187,7 @@ class StartWindow:
         
         # Create a label for the timer
         if self.DisplayTimer: 
-            self.lbl_timer = tk.Label(master=self.canvas, text="0")
+            self.lbl_timer = tk.Label(master=self.canvas, text="0", font=("Helvetica", 22, "bold"))
             self.lbl_timer.place(relx=0.95, rely=0.95, anchor='sw') 
 
         # NOTE Choose a colormap for aggregate trajectories (one color per trial)

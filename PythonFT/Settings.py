@@ -68,6 +68,7 @@ class SettingsWindow:
         
         # placing labels 
         lbl_num_quest.grid(row=0, column=0, pady=2, sticky='w')
+<<<<<<< HEAD
         lbl_task_instructions.grid(row=2, column=0, pady=2, sticky='nw')
         lbl_task_instructions_duration.grid(row=3, column=0, pady=2, sticky='w')
         canvas1.grid(row=4, column=0, sticky="ew", pady=(0, 0))
@@ -86,6 +87,24 @@ class SettingsWindow:
         lbl_target_size.grid(row=18, column=0, pady=2, sticky='w')
         lbl_display_timer.grid(row=19, column=0, pady=2, sticky='w')
         canvas4.grid(row=20, column=0, sticky="ew", pady=(0, 0))
+=======
+        canvas1.grid(row=2, column=0, sticky="ew", pady=(0, 0))
+        lbl_inverted.grid(row=3, column=0, pady=2, sticky='w')
+        lbl_trigger_visible.grid(row=4, column=0, pady=5, sticky='w')
+        lbl_direction_triangles.grid(row=5, column=0, pady=2, sticky='w')
+        lbl_display_timer.grid(row=6, column=0, pady=2, sticky='w')
+        canvas2.grid(row=7, column=0, sticky="ew", pady=(0, 0))
+        lbl_configure_with_csv.grid(row=8, column=0, pady=2, sticky='w')
+        canvas3.grid(row=10, column=0, sticky="ew", pady=(0, 0))
+        lbl_trajectory_sampling_rate.grid(row=11, column=0, pady=2, sticky='w')
+        lbl_preparation_time.grid(row=12, column=0, pady=2, sticky='w')
+        lbl_inter_trial_time.grid(row=13, column=0, pady=2, sticky='w')
+        lbl_time_to_center.grid(row=14, column=0, pady=2, sticky='w')
+        lbl_triangle_time.grid(row=15, column=0, pady=2, sticky='w')
+        lbl_num_random_trial.grid(row=16, column=0, pady=2, sticky='w')
+        lbl_target_size.grid(row=17, column=0, pady=2, sticky='w')
+        canvas4.grid(row=18, column=0, sticky="ew", pady=(0, 0))
+>>>>>>> 2823406 (added display timer to Settings and changed font)
         
         # drawing the lines
         canvas1.create_line(0, 1, canvas1.winfo_reqwidth(), 1, fill="black")
@@ -103,10 +122,14 @@ class SettingsWindow:
         self.clk_direction_triangles = tk.BooleanVar()
         self.clk_configure_with_csv = tk.BooleanVar()
         self.clk_display_timer = tk.BooleanVar()
+<<<<<<< HEAD
 
         # Create a Text widget for instructions
         self.txt_task_instruction = tk.Text(self.frm_settings, width=60, height=15)
 
+=======
+        
+>>>>>>> 2823406 (added display timer to Settings and changed font)
         # creating entry boxes
         self.ent_trajectory_sampling_rate = ttk.Entry(self.frm_settings)
         self.ent_preparation_time = ttk.Entry(self.frm_settings)
@@ -127,6 +150,7 @@ class SettingsWindow:
             self.clk_trigger_visible.set(data["trigger_visible"])
             self.clk_direction_triangles.set(data["direction_triangles"])
             self.clk_configure_with_csv.set(data["configure_with_csv"])
+            self.clk_display_timer.set(data["display_timer"])
             self.ent_trajectory_sampling_rate.insert(0, data["trajectory_sampling_rate"])
             self.ent_preparation_time.insert(0, data["preparation_time"])
             self.ent_inter_trial_time.insert(0, data["inter-trial_time"])
@@ -147,6 +171,7 @@ class SettingsWindow:
 
         # placing option menus and entry boxes
         drp_num_quest.grid(row=0, column=1, pady=2, padx=10, sticky='w')
+<<<<<<< HEAD
         self.txt_task_instruction.grid(row=2, column=1, pady=2, padx=10, sticky='w')
         drp_task_instructions_duration.grid(row=3, column=1, pady=2, padx=10, sticky='w')
         drp_inverted.grid(row=5, column=1, pady=2, padx=10, sticky='w')
@@ -161,6 +186,20 @@ class SettingsWindow:
         self.ent_num_random_trial.grid(row=17, column=1, pady=2, padx=10, sticky='w')
         self.ent_target_size.grid(row=18, column=1, pady=2, padx=10, sticky='w')
         drp_display_timer.grid(row=19, column=1, pady=2, padx=10, sticky='w')
+=======
+        drp_inverted.grid(row=3, column=1, pady=2, padx=10, sticky='w')
+        drp_trigger_visible.grid(row=4, column=1, pady=2, padx=10, sticky='w')
+        drp_direction_triangles.grid(row=5, column=1, pady=2, padx=10,  sticky='w')
+        drp_display_timer.grid(row=6, column=1, pady=2, padx=10, sticky='w')
+        drp_configure_with_csv.grid(row=8, column=1, pady=2, padx=10, sticky='w')
+        self.ent_trajectory_sampling_rate.grid(row=11, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_preparation_time.grid(row=12, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_inter_trial_time.grid(row=13, column=1, pady=2, padx=10,  sticky='w')
+        self.ent_time_to_center.grid(row=14, column=1, pady=2, padx=10, sticky='w')
+        self.ent_triangle_time.grid(row=15, column=1, pady=2, padx=10, sticky='w')
+        self.ent_num_random_trial.grid(row=16, column=1, pady=2, padx=10, sticky='w')
+        self.ent_target_size.grid(row=17, column=1, pady=2, padx=10, sticky='w')
+>>>>>>> 2823406 (added display timer to Settings and changed font)
 
         # Create a frame to hold the Entry widgets and Option Menus that depend on other Option Menus 
         # i.e., second order widgets
@@ -279,6 +318,7 @@ class SettingsWindow:
                 drp_answer_range.grid(row=4*i + i+3, column=2, pady=2, padx=10, sticky='w')
 
         btn_open_config = ttk.Button(self.frm_settings, text="Open config file", command=self.open_config)
+<<<<<<< HEAD
         btn_open_config.grid(row=21, column=0, pady=10, padx=20, sticky='w')
 
         btn_save = ttk.Button(self.frm_settings, text="Save", command=self.save_settings)
@@ -289,11 +329,24 @@ class SettingsWindow:
 
         lbl_remark = tk.Label(master=self.frm_settings, text="NB: As a reference, the starting cross is at 5% of the screen height and times are in miliseconds (ms).", font=("Arial", 12, "italic"))
         lbl_remark.grid(row=24, column=0, pady=10, padx=20, sticky='w')
+=======
+        btn_open_config.grid(row=19, column=0, pady=10, padx=20, sticky='w')
+
+        btn_save = ttk.Button(self.frm_settings, text="Save", command=self.save_settings)
+        btn_save.grid(row=20, column=0, pady=2, padx=20, sticky='w')
+
+        btn_close = ttk.Button(self.frm_settings, text="Close", command=self.close_settings_window)
+        btn_close.grid(row=21, column=0, pady=2, padx=20, sticky='w')
+
+        lbl_remark = tk.Label(master=self.frm_settings, text="NB: As a reference, the starting cross is at 5% of the screen height and times are in miliseconds (ms).", font=("Arial", 12, "italic"))
+        lbl_remark.grid(row=22, column=0, pady=10, padx=20, sticky='w')
+>>>>>>> 2823406 (added display timer to Settings and changed font)
 
     def on_configure(self, event):
         # Set the scroll region after UI has been configured
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
+    # update window based on selections made
     def update_csv_config_options(self, value):
         if not self.clk_configure_with_csv.get(): 
             lbl_mouse_appear_freq = tk.Label(master=self.frame_not_config_with_csv, text="Mouse appearance frequency (%):") 
@@ -435,9 +488,10 @@ class SettingsWindow:
             for widget in self.entry_frame_triangle_direction.winfo_children():
                widget.destroy() 
 
+
     def open_config(self):
-        #subprocess.run(["open", self.ConfigFilePath])
-        os.startfile(self.ConfigFilePath) # Windows Implementation
+        subprocess.run(["open", self.ConfigFilePath])
+        #os.startfile(self.ConfigFilePath) # Windows Implementation
 
     def save_settings(self):        
         val_num_questions = self.clk_num_quest.get()
@@ -461,6 +515,7 @@ class SettingsWindow:
         val_trigger_visible = self.clk_trigger_visible.get()
         val_direction_triangles = self.clk_direction_triangles.get()
         val_configure_with_csv = self.clk_configure_with_csv.get()
+        val_display_timer = self.clk_display_timer.get()
         if not val_configure_with_csv:
             val_mouse_appear_freq = self.auto_config_param["mouse_appear_freq"].get()
             val_num_triggers = self.auto_config_param["num_triggers"].get()
@@ -494,6 +549,7 @@ class SettingsWindow:
         data["trigger_visible"] = val_trigger_visible
         data["direction_triangles"] = val_direction_triangles
         data["configure_with_csv"] = val_configure_with_csv
+        data["display_timer"] = val_display_timer
         if not val_configure_with_csv:
             data["mouse_appear_freq"] = float(val_mouse_appear_freq)
             data["num_triggers"] = val_num_triggers
