@@ -1,7 +1,7 @@
 # 🌊 Flow Task v1.0.1
 
 The Flow Task is an application tailored to assess variations in response efficiency across distinct subject groups. The cohorts being analyzed comprise seasoned contemplative practitioners, expert first-person shooter gamers, and a control group. 
-This task was chiefly designed by [David Zarka]() in collaboration with [Mathieu Petieau]().
+This task was chiefly designed by [David Zarka](https://www.researchgate.net/profile/David-Zarka-2) in collaboration with [Mathieu Petieau](https://www.researchgate.net/profile/Mathieu-Petieau).
 
 ---
 ---

@@ -16,7 +16,7 @@ import datetime
 import colorsys
 import time
 
-import ctypes # Windows implementation
+#import ctypes # Windows implementation
 import subprocess
 
 from Config import *
@@ -25,15 +25,15 @@ from Questions import *
 
 # Define the RECT structure to immobilize the mouse
 # Windows implementation
-class RECT(ctypes.Structure):
-    _fields_ = [("left", ctypes.c_long),
-                ("top", ctypes.c_long),
-                ("right", ctypes.c_long),
-                ("bottom", ctypes.c_long)]
+# class RECT(ctypes.Structure):
+#     _fields_ = [("left", ctypes.c_long),
+#                 ("top", ctypes.c_long),
+#                 ("right", ctypes.c_long),
+#                 ("bottom", ctypes.c_long)]
                 
 # Windows implementation 
 # Load user32.dll for blocking mouse
-user32 = ctypes.windll.user32
+#user32 = ctypes.windll.user32
 
 class StartWindow:
     def __init__(self, master):
@@ -43,6 +43,7 @@ class StartWindow:
         self.screen_width = self.root.screen_width
         self.screen_height = self.root.screen_height
         self.config = Config(self.root.ConfigFilePath, self.root)
+
         # try: 
         #     self.lptPort = LptPort(0x0378)# Idea: should add the '0x0378' and other std LPT adresses in settings pannel
         # except:
@@ -122,6 +123,7 @@ class StartWindow:
         image_red_tri_resized = image_red_tri.resize((TriangleSize, TriangleSize))
         image_tri_90_resized = image_tri_90.resize((TriangleSize, TriangleSize))
         image_tri_270_resized = image_tri_270.resize((TriangleSize, TriangleSize))
+        
         image_red_tri_90_resized = image_red_tri_90.resize((TriangleSize, TriangleSize))
         image_red_tri_270_resized = image_red_tri_270.resize((TriangleSize, TriangleSize))
         self.image_cross_resized = image_cross.resize((self.CrossSize, self.CrossSize))
@@ -188,7 +190,9 @@ class StartWindow:
             self.lbl_timer.place(relx=0.95, rely=0.95, anchor='sw') 
 
         # TODO Choose a colormap for aggregate trajectories (one color per trial)
-        colormap_name = 'spring'  # other sequential colormaps are the other season names or 'cool'
+
+        colormap_name = 'jet' #'spring'  # other sequential colormaps are the other season names or 'cool'
+        # give the link for all colormapsof the matplotlib colormaps
         cmap = plt.get_cmap(colormap_name)
         num_intervals = self.NumTrials
         intervals = np.linspace(0, 1, num_intervals)
@@ -196,8 +200,9 @@ class StartWindow:
         self.hex_colors_trial = [mcolors.to_hex(color) for color in colors]
 
         # TODO Choose a colormap for aggregate trajectories (color change according to velocity)
-        colormap_name = 'winter' # other sequential colormaps are the other season names or 'cool'
-        self.cmap_velocity = plt.get_cmap(colormap_name)
+        colormap_name = 'winter' # # other sequential colormaps are the other season names or 'cool'
+        # reverse the colormap to have the lowest velocity in green
+        self.cmap_velocity = plt.get_cmap(colormap_name).reversed()
         scaling_factor = 0.1 # choose appropriate scaling factor for maximum velocity TODO
         self.max_velocity = np.sqrt(self.screen_width**2 + self.screen_height**2)/self.TrajSamplingRate * scaling_factor # assuming it's the diagonal of the screen traversed at the recording rate
 
@@ -206,6 +211,23 @@ class StartWindow:
         self.root.wait_window(instructions_window)  
 
         self.global_update()
+        
+    def open_instructions_window(self, instructions, duration):
+        global instructions_window
+        instructions_window = tk.Toplevel(self.root)
+        instructions_window.title("Task Instructions")
+        self.instructions_canvas = tk.Canvas(instructions_window, width=self.screen_width, height=self.screen_height, bg=self.root.cget('bg'))
+        self.instructions_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        self.lbl_task_instructions = tk.Label(self.instructions_canvas, text="Task Instructions",
+        font=("Arial", 24), bg="blue",  fg="white", width=self.instructions_canvas.winfo_screenwidth(), height=3)
+        self.lbl_task_instructions.pack(anchor="n", fill="x")
+        label = tk.Label(self.instructions_canvas, text=instructions, font=("Arial", 20), wraplength=1000)
+        label.pack(anchor="center", pady=200)
+        instructions_window.after(duration * 1000, self.close_instructions_window)
+        
+    def close_instructions_window(self):
+        instructions_window.destroy() 
 
     def open_instructions_window(self, instructions, duration):
         global instructions_window
@@ -331,6 +353,7 @@ class StartWindow:
     def mouse_velocity(self, prev_x, prev_y, x, y):
         return np.sqrt((prev_x - x)**2 + (prev_y - y)**2)/self.TrajSamplingRate
         
+
     def save_trajectory_info(self, coordinates, img, type):
         dir_path = os.path.dirname(os.path.abspath(__file__))
         dir_output = "Output"
@@ -357,7 +380,6 @@ class StartWindow:
             traj_file_name_agg = f"mouse_trajectory_velocity_agg_{num}.png"
             TrajFilePathAgg = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories, traj_file_name_agg)
             img.save(TrajFilePathAgg)
-
 
     def is_point_in_start_block(self, x, y):
         frame_x = self.frm_starting_block.winfo_rootx()
@@ -413,7 +435,7 @@ class StartWindow:
 
         self.lbl_decoy_target.place(relx=0.5, rely=0.2, anchor='center')
         self.root.config(cursor="")
-        lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
+        #lock_cursor_to_rect(self.cross_center[0], self.cross_center[1], 1, 1) # Windows implementation
         self.trial_update() 
 
     def is_there_question_type(self, question_timing):
@@ -442,6 +464,7 @@ class StartWindow:
         if x != self.cross_center[0] or  y != self.cross_center[1]:
             self.mouse_has_moved = True
             return True 
+
 
     def show_target_based_on_pos(self):
         self.seconds_elapsed += self.refresh_rate/1000
@@ -533,7 +556,9 @@ class StartWindow:
         self.time_in_target = 0
         if self.recording == True:
             self.recording = False
-            self.save_trajectory_info(self.coordinates, self.img)
+            self.save_trajectory_info(self.coordinates, self.img, "new")
+            self.save_trajectory_info(self.coordinates, self.agg_trial_image, "agg_trial")
+            self.save_trajectory_info(self.coordinates, self.agg_velocity_image, "agg_velocity")
         self.trial_counter += 1
         self.global_update()
 
@@ -603,6 +628,7 @@ class StartWindow:
             #     self.lptPort.sendEvent(215)
         if np.allclose(self.seconds_elapsed, self.PreparationTime/1000 + self.TriangleTime/1000 + self.TriangleTargetInterval[self.trial_counter]/1000) and not self.target_set: # second part not necessary if allclose precise enough
             unlock_cursor() # Windows implemetation
+
             self.lbl_decoy_target.config(image=self.img_target_preloaded)
             self.lbl_decoy_target.image = self.img_target_preloaded
             #self.lptPort.sendEvent(100)
@@ -696,5 +722,6 @@ def lock_cursor_to_rect(x, y, width, height):
 
 def unlock_cursor():
     user32.ClipCursor(None)
+
 
     
