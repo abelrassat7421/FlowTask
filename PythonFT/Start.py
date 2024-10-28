@@ -164,8 +164,8 @@ class StartWindow:
         events_description_file_name = "events_description.md"
         dir_output = "Output"
         dir_current_output = f"Output_{self.start_time}"
-        NewOuputPath = os.path.join(dir_path, dir_output, dir_current_output)
-        os.makedirs(NewOuputPath)
+        NewOutputPath = os.path.join(dir_path, dir_output, dir_current_output)
+        os.makedirs(NewOutputPath)
         dir_trajectories = "Trajectories"
         dir_answers = "Answers"
         self.NewDirTraject = os.path.join(dir_path, dir_output, dir_current_output, dir_trajectories)
@@ -312,7 +312,7 @@ class StartWindow:
             self.agg_trial_image.paste(self.image_tar_resized, (round(self.screen_width*0.85 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             _, _, _, a = self.image_cross_resized.split()
             self.agg_trial_image.paste(self.image_cross_resized, (round(self.screen_width*0.5 - 0.5*self.CrossSize), round(0.95*self.screen_height - 0.5*self.CrossSize)), mask=a)
-
+  
             _, _, _, a = self.image_tar_resized.split()
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.15 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
             self.agg_velocity_image.paste(self.image_tar_resized, (round(self.screen_width*0.5 - 0.5*self.TargetSize), round(self.lbl_target.winfo_rooty())), mask=a)
@@ -456,6 +456,12 @@ class StartWindow:
     def is_target_reached(self, x, y):
         target_x = self.lbl_target.winfo_rootx()
         target_y = self.lbl_target.winfo_rooty()
+        # NOTE: for reconstruction of the trajectories
+        lbl_target_winfo_y = self.lbl_target.winfo_rooty()
+        # Save to a text file
+        with open("lbl_target_winfo_y.txt", "w") as file:
+            file.write(str(lbl_target_winfo_y))
+        
         target_width = self.lbl_target.winfo_width()
         target_height = self.lbl_target.winfo_height()
         center_x = target_x + target_width / 2
@@ -506,6 +512,7 @@ class StartWindow:
     def is_target_center_reached(self, x, y):
         target_x = self.lbl_target.winfo_rootx()
         target_y = self.lbl_target.winfo_rooty()
+
         target_width = self.TargetSize
         target_height = self.TargetSize
         center_x = target_x + target_width / 2

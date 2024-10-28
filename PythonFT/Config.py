@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 class Config:
-    def __init__(self, json_file, master):
+    def __init__(self, json_file, master=None):
         with open(json_file, 'r') as file:
             data = json.load(file)
             
